@@ -11,10 +11,15 @@ config_version=5
 [application]
 
 config/name="The Four Fabled"
+config/name_localized={
+"ru": "Четыре Легенды"
+}
 config/version="0.1.0"
 run/main_scene="uid://cvs22u8jmyiie"
 config/features=PackedStringArray("4.5", "C#", "Mobile")
-config/icon="res://icon.svg"
+boot_splash/fullsize=false
+boot_splash/image="uid://dqkicbodyiatj"
+config/icon="uid://dqkicbodyiatj"
 
 [display]
 
@@ -29,6 +34,10 @@ project/assembly_name="The Four Fabled"
 [gui]
 
 theme/custom_font="res://Content/Fonts/Dodis/Dosis-VariableFont_wght.ttf"
+
+[internationalization]
+
+locale/locale_filter_mode=1
 
 [rendering]
 
