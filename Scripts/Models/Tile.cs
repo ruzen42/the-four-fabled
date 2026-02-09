@@ -1,9 +1,10 @@
-using Godot;
-using System;
+using Godot.Collections;
 
-public partial class Tile 
+namespace TheFourFabled.Scripts.Models;
+
+public class Tile 
 {
 	public int X { get; set; }
 	public int Y { get; set; }
-	public Resources innerResources { get; init; }
+	public Dictionary<GameResource, uint> InnerGameResource { get; init; }
 }

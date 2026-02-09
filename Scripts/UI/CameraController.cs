@@ -1,5 +1,6 @@
 using Godot;
-using System;
+
+namespace TheFourFabled.Scripts.UI;
 
 public partial class CameraController : Camera2D
 {
