@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Godot;
 using TheFourFabled.Scripts.Models;
@@ -22,14 +21,15 @@ public partial class MapLoader : Node
         foreach (var coords in usedCells)
         {
             var data = MyTileMap.GetCellTileData(coords);
-            
-            var typeId = (int)data.GetCustomData("tile_type_id");
 
-            var newTile = new Tile(new Godot.Collections.Dictionary<GameResource, uint>(), coords, (Tile.TileType)typeId);
+            //var typeId = (int)data.GetCustomData("tile_type_id");
 
-            InitializeDefaultResources(newTile);
+            //var newTile = new Tile(new Godot.Collections.Dictionary<GameResource, uint>(), coords,
+            //    (Tile.TileType)typeId);
 
-            _gameTiles[coords] = newTile;
+            //InitializeDefaultResources(newTile);
+
+            //_gameTiles[coords] = newTile;
         }
     }
 
@@ -38,7 +38,7 @@ public partial class MapLoader : Node
         switch (tile.Type)
         {
             case Tile.TileType.Land:
-                tile.InnerGameResource[GameResource.Wood] = 10; 
+                tile.InnerGameResource[GameResource.Wood] = 10;
                 tile.InnerGameResource[GameResource.Ore] = 2;
                 break;
         }

@@ -4,8 +4,8 @@ namespace TheFourFabled.Scripts.UI;
 
 public partial class GameContextMenu : Control
 {
-    // Событие, которое мы будем вызывать, когда игрок выберет действие
-    [Signal] public delegate void ActionSelectedEventHandler(string actionName, Vector2I tileCoords);
+    [Signal]
+    public delegate void ActionSelectedEventHandler(string actionName, Vector2I tileCoords);
 
     private Vector2I _currentTileCoords;
     private PanelContainer _menuPanel;
@@ -13,12 +13,9 @@ public partial class GameContextMenu : Control
     public override void _Ready()
     {
         _menuPanel = GetNode<PanelContainer>("PanelContainer");
-        
-        // Скрываем меню при старте
+
         Visible = false;
 
-        // Подключаем кнопки (пример для двух кнопок)
-        // Убедитесь, что пути к кнопкам правильные!
         GetNode<Button>("PanelContainer/VBoxContainer/BuildCity").Pressed += () => OnBtnPressed("BuildCity");
         GetNode<Button>("PanelContainer/VBoxContainer/BuildUpgrade").Pressed += () => OnBtnPressed("Upgrade");
     }
@@ -26,7 +23,7 @@ public partial class GameContextMenu : Control
     public void ShowMenu(Vector2 screenPosition, Vector2I tileCoords)
     {
         _currentTileCoords = tileCoords;
-        Position = screenPosition; 
+        Position = screenPosition;
         Visible = true;
     }
 
@@ -36,18 +33,14 @@ public partial class GameContextMenu : Control
         CloseMenu();
     }
 
-    public void CloseMenu()
-    {
-        Visible = false;
-    }
+    public void CloseMenu() => Visible = false;
 
-    // Закрываем меню, если кликнули мимо него
     public override void _UnhandledInput(InputEvent @event)
     {
         if (!Visible || @event is not InputEventMouseButton { Pressed: true } mouseBtn) return;
-        
+
         var menuRect = _menuPanel.GetGlobalRect();
-            
+
         if (!menuRect.HasPoint(mouseBtn.GlobalPosition))
         {
             CloseMenu();
