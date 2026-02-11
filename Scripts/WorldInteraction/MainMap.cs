@@ -1,9 +1,12 @@
 using Godot;
+using TheFourFabled.Scripts.UI;
 
 namespace TheFourFabled.Scripts.WorldInteraction;
 
 public partial class MainMap : TileMapLayer
 {
+    [Export] public GameContextMenu ContextMenu;
+
     public override void _Input(InputEvent @event)
     {
         if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }) return;
@@ -28,12 +31,10 @@ public partial class MainMap : TileMapLayer
         
         GD.Print($"Click Right {coords}");
 
-        var data = GetCellTileData(coords);
-        
-        if (data != null)
-        {
-            //var canBuild = data.GetCustomData("can_build");
-            //GD.Print($"Клик по клетке {coords}. Можно строить: {canBuild}");
-        }
+        //var data = GetCellTileData(coords);
+
+        var screenMousePos = GetViewport().GetMousePosition();
+            
+        ContextMenu.ShowMenu(screenMousePos, coords);
     }
 }

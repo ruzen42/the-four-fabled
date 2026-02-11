@@ -1,14 +1,19 @@
-[gd_resource type="Theme" load_steps=3 format=3 uid="uid://diunfs0nmtp80"]
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://diunfs0nmtp80"]
 
 [ext_resource type="FontFile" uid="uid://bqisxrsw5be5h" path="res://Content/Fonts/Dodis/static/Dosis-Light.ttf" id="1_0pkyp"]
 [ext_resource type="FontFile" uid="uid://md4ks1lx4tl4" path="res://Content/Fonts/Dodis/static/Dosis-ExtraLight.ttf" id="2_3r32o"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0pkyp"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3r32o"]
+
 [resource]
 default_font = ExtResource("2_3r32o")
-default_font_size = 46
-Button/colors/font_disabled_color = Color(0.72692025, 0, 0.16588384, 1)
+default_font_size = 35
 Button/colors/font_hover_color = Color(0.4862745, 0.9490196, 0.9490196, 1)
 Button/constants/outline_size = 3
+Button/styles/focus = SubResource("StyleBoxEmpty_0pkyp")
+Button/styles/pressed = SubResource("StyleBoxEmpty_3r32o")
 Label/colors/font_outline_color = Color(0, 0, 0, 1)
 Label/colors/font_shadow_color = Color(0, 0, 0, 0)
 Label/constants/line_spacing = 3
