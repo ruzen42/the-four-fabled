@@ -1,6 +1,7 @@
-[gd_scene load_steps=13 format=4 uid="uid://cvs22u8jmyiie"]
+[gd_scene load_steps=18 format=4 uid="uid://cvs22u8jmyiie"]
 
 [ext_resource type="Script" uid="uid://d2voumov2ho3" path="res://Scripts/GameLogic/MainGame.cs" id="1_6y7pd"]
+[ext_resource type="Texture2D" uid="uid://d2fq60sg1bifk" path="res://Content/2DArts/city-atlas.png" id="1_73nn6"]
 [ext_resource type="Texture2D" uid="uid://cb8xsr5cgxby0" path="res://Content/2DArts/main-atlas.jpg" id="1_l756w"]
 [ext_resource type="Script" uid="uid://dyi4552kkypr" path="res://Scripts/WorldInteraction/MainMap.cs" id="2_6j5ir"]
 [ext_resource type="Script" uid="uid://ty23p3bh7odt" path="res://Scripts/UI/CameraController.cs" id="2_pu3va"]
@@ -8,6 +9,23 @@
 [ext_resource type="Script" uid="uid://cbuf38hwo6lmh" path="res://Scripts/WorldInteraction/MapLoader.cs" id="3_mgc0q"]
 [ext_resource type="PackedScene" uid="uid://onbg1gx002p" path="res://Content/Nodes/GameContextMenu.tscn" id="6_bb2iq"]
 [ext_resource type="PackedScene" uid="uid://c50bfc4couek3" path="res://Content/Nodes/PauseMenu.tscn" id="8_73nn6"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_r0mdn"]
+resource_name = "Cities"
+texture = ExtResource("1_73nn6")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:1/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_0xqxu"]
+tile_size = Vector2i(128, 128)
+sources/0 = SubResource("TileSetAtlasSource_r0mdn")
+
+[sub_resource type="TileSetScenesCollectionSource" id="TileSetScenesCollectionSource_73nn6"]
+
+[sub_resource type="TileSet" id="TileSet_tpqse"]
+tile_shape = 1
+sources/0 = SubResource("TileSetScenesCollectionSource_73nn6")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0e3vx"]
 texture = ExtResource("1_l756w")
@@ -284,8 +302,14 @@ events = [SubResource("InputEventKey_6j5ir")]
 
 [node name="MainGame" type="Node2D"]
 
+[node name="Cities" type="TileMapLayer" parent="."]
+z_index = 1
+tile_map_data = PackedByteArray("AAAjABEAAAAAAAEAAADq/xAAAAAAAAEAAAD9//n/AAAAAAEAAAAZAP3/AAAAAAEAAAA=")
+tile_set = SubResource("TileSet_0xqxu")
+
 [node name="Selection" type="TileMapLayer" parent="."]
 process_mode = 1
+tile_set = SubResource("TileSet_tpqse")
 
 [node name="MainMap" type="TileMapLayer" parent="." node_paths=PackedStringArray("ContextMenu")]
 process_mode = 1
