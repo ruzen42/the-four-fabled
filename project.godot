@@ -16,10 +16,10 @@ config/name_localized={
 }
 config/version="0.1.0"
 run/main_scene="uid://baoyr1t458drm"
-config/features=PackedStringArray("4.5", "C#", "Mobile")
-boot_splash/fullsize=false
+config/features=PackedStringArray("4.6", "C#", "Mobile")
 boot_splash/image="uid://cv1mrfn6eqnnw"
 config/icon="uid://cv1mrfn6eqnnw"
+boot_splash/fullsize=false
 
 [autoload]
 

@@ -16,6 +16,4 @@ public partial class MainGame : CanvasLayer
 		PauseMenu.Show();
 		
 	}
-	
-	
 }

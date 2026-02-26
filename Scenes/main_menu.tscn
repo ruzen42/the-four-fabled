@@ -1,100 +1,116 @@
-[gd_scene load_steps=5 format=3 uid="uid://baoyr1t458drm"]
+[gd_scene format=3 uid="uid://baoyr1t458drm"]
 
 [ext_resource type="Texture2D" uid="uid://c241mh0xpt5k4" path="res://Content/2DArts/main-menu-background.jpg" id="1_28flt"]
 [ext_resource type="Theme" uid="uid://diunfs0nmtp80" path="res://Content/Themes/UI-theme.tres" id="2_1ehe0"]
 [ext_resource type="Script" uid="uid://c2hnkh2swgbna" path="res://Scripts/UI/MainMenuCamera.cs" id="2_48xlc"]
 [ext_resource type="Script" uid="uid://n0v45r8kbir8" path="res://Scripts/UI/MainMenuButtons.cs" id="2_ce3w2"]
+[ext_resource type="Script" uid="uid://cgaugr7f3rp0x" path="res://Scripts/UI/MainMenuUI.cs" id="2_opfnp"]
+[ext_resource type="PackedScene" uid="uid://cxvx5i7f24y2e" path="res://Content/Nodes/OptionsMenu.tscn" id="4_n45e2"]
+[ext_resource type="PackedScene" uid="uid://cckldudl6dbo0" path="res://Content/Nodes/NetworkMenu.tscn" id="6_cp0ys"]
 
-[node name="MainMenu" type="Node2D"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cp0ys"]
+bg_color = Color(0, 0, 0, 0.36078432)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+corner_detail = 4
+expand_margin_left = 22.0
+expand_margin_right = 22.0
 
-[node name="MainMenuBackground" type="Sprite2D" parent="."]
-position = Vector2(958.99994, 539)
+[node name="MainMenu" type="Node2D" unique_id=907101010]
+
+[node name="MainMenuBackground" type="Sprite2D" parent="." unique_id=952043074]
+position = Vector2(923.00006, 527)
 scale = Vector2(1.065, 1.065)
 texture = ExtResource("1_28flt")
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1655304460]
+script = ExtResource("2_opfnp")
 
-[node name="ButtonsBox" type="VBoxContainer" parent="UI"]
+[node name="PanelContainer" type="PanelContainer" parent="UI" unique_id=1293383137]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -367.5
-offset_top = -325.5
-offset_right = 367.5
-offset_bottom = 325.5
+offset_left = -304.0
+offset_top = -239.0
+offset_right = 217.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("2_ce3w2")
+theme_override_styles/panel = SubResource("StyleBoxFlat_cp0ys")
 
-[node name="GameName" type="Label" parent="UI/ButtonsBox"]
+[node name="ButtonsBox" type="VBoxContainer" parent="UI/PanelContainer" unique_id=1159258182 node_paths=PackedStringArray("OptionsMenu", "NetworkMenu")]
+layout_mode = 2
+script = ExtResource("2_ce3w2")
+OptionsMenu = NodePath("../../OptionsMenu")
+NetworkMenu = NodePath("../../NetworkMenu")
+
+[node name="GameName" type="Label" parent="UI/PanelContainer/ButtonsBox" unique_id=1999367199]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 127
+theme_override_font_sizes/font_size = 90
 text = "The Four Fabled"
 horizontal_alignment = 1
 
-[node name="Singleplayer" type="Button" parent="UI/ButtonsBox"]
+[node name="Singleplayer" type="Button" parent="UI/PanelContainer/ButtonsBox" unique_id=1828674579]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 90
-text = "Singleplayer"
-flat = true
-
-[node name="Multiplayer" type="Button" parent="UI/ButtonsBox"]
-layout_mode = 2
-theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 90
+theme_override_font_sizes/font_size = 50
 disabled = true
-text = "Multiplayer (soon...)"
+text = "Singleplayer (soon)"
 flat = true
 
-[node name="Options" type="Button" parent="UI/ButtonsBox"]
+[node name="Multiplayer" type="Button" parent="UI/PanelContainer/ButtonsBox" unique_id=206894533]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 90
+theme_override_font_sizes/font_size = 50
+text = "Multiplayer"
+flat = true
+
+[node name="Options" type="Button" parent="UI/PanelContainer/ButtonsBox" unique_id=1484054038]
+layout_mode = 2
+theme = ExtResource("2_1ehe0")
+theme_override_font_sizes/font_size = 50
 text = "Options"
 flat = true
 
-[node name="Exit" type="Button" parent="UI/ButtonsBox"]
+[node name="Exit" type="Button" parent="UI/PanelContainer/ButtonsBox" unique_id=1457230010]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_colors/font_color = Color(0.95910233, 0.5306955, 0.49126238, 1)
-theme_override_font_sizes/font_size = 90
+theme_override_font_sizes/font_size = 50
 text = "Exit"
 flat = true
 
-[node name="Options" type="VBoxContainer" parent="UI"]
+[node name="OptionsMenu" parent="UI" unique_id=23080875 instance=ExtResource("4_n45e2")]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -367.5
-offset_top = -325.5
-offset_right = 367.5
-offset_bottom = 325.5
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = -360.0
+offset_top = -227.0
+offset_right = -360.0
+offset_bottom = -227.0
 
-[node name="GameName" type="Label" parent="UI/Options"]
-layout_mode = 2
-theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 127
-text = "Options"
-horizontal_alignment = 1
+[node name="NetworkMenu" parent="UI" unique_id=1180927797 instance=ExtResource("6_cp0ys")]
+visible = false
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 718.0
+offset_top = 300.0
+offset_right = 991.5
+offset_bottom = 589.0
+grow_horizontal = 1
+grow_vertical = 1
+script = null
 
-[node name="Exit" type="Button" parent="UI/Options"]
-layout_mode = 2
-theme = ExtResource("2_1ehe0")
-theme_override_colors/font_color = Color(0.95910233, 0.5306955, 0.49126238, 1)
-theme_override_font_sizes/font_size = 90
-text = "Exit"
-flat = true
-
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=949978276]
 position = Vector2(910, 524)
 limit_left = -65
 limit_top = -35
@@ -105,7 +121,7 @@ position_smoothing_enabled = true
 position_smoothing_speed = 1.0
 script = ExtResource("2_48xlc")
 
-[connection signal="button_up" from="UI/ButtonsBox/Singleplayer" to="UI/ButtonsBox" method="OnSingleplayerButton_Click"]
-[connection signal="button_up" from="UI/ButtonsBox/Options" to="UI/ButtonsBox" method="OnOptionsButton_Clicked"]
-[connection signal="button_up" from="UI/ButtonsBox/Exit" to="UI/ButtonsBox" method="OnExitButton_Clicked"]
-[connection signal="button_up" from="UI/Options/Exit" to="UI/Options" method="OnExitButton_Clicked"]
+[connection signal="button_up" from="UI/PanelContainer/ButtonsBox/Singleplayer" to="UI/PanelContainer/ButtonsBox" method="OnSingleplayerButton_Click"]
+[connection signal="button_up" from="UI/PanelContainer/ButtonsBox/Multiplayer" to="UI/PanelContainer/ButtonsBox" method="NetworkButton_OnClick"]
+[connection signal="button_up" from="UI/PanelContainer/ButtonsBox/Options" to="UI/PanelContainer/ButtonsBox" method="OnOptionsButton_Clicked"]
+[connection signal="button_up" from="UI/PanelContainer/ButtonsBox/Exit" to="UI/PanelContainer/ButtonsBox" method="OnExitButton_Clicked"]
