@@ -41,6 +41,11 @@ public partial class Console : CanvasLayer
 		};
 	}
 
+	private void OnSent_OnClick()
+	{
+		OnCommandEntered(_input.Text); 
+	}
+
 	private void OnCommandEntered(string text)
 	{
 		Print("> " + text);
@@ -57,7 +62,7 @@ public partial class Console : CanvasLayer
 		var args = parts.Length > 1 ? parts[1..] : [];
 
 		if (_commands.TryGetValue(cmd, out var value))
-            value(args);
+			value(args);
 		else
 			Print("Unknown command");
 	}
@@ -67,8 +72,11 @@ public partial class Console : CanvasLayer
 	private void Toggle()
 	{
 		Visible = !Visible;
+	}
 
-		if (Visible)
-			_input.GrabFocus();
+	public override void _Input(InputEvent @event)
+	{
+		if (@event is InputEventKey { Pressed: true, Keycode: Key.Tab }) 
+			Toggle(); 
 	}
 }

@@ -1,27 +1,35 @@
 [gd_scene format=3 uid="uid://gtl6ocm2wvo0"]
 
-[node name="Console" type="Node2D" unique_id=836907667]
+[ext_resource type="Script" uid="uid://dmgq2wn1m11ev" path="res://Scripts/UI/Game/Console.cs" id="1_jdksa"]
 
-[node name="Panel" type="Panel" parent="." unique_id=1485917309]
+[node name="CanvasLayer" type="CanvasLayer" unique_id=755625860]
+script = ExtResource("1_jdksa")
+
+[node name="Panel" type="Panel" parent="." unique_id=1498821615]
 offset_right = 822.0
 offset_bottom = 499.0
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Panel" unique_id=775080619]
+[node name="Output" type="RichTextLabel" parent="Panel" unique_id=591843567]
 layout_mode = 0
-offset_right = 816.0
-offset_bottom = 441.0
+offset_left = 15.0
+offset_top = 6.0
+offset_right = 817.0
+offset_bottom = 457.0
 
-[node name="LineEdit" type="LineEdit" parent="Panel" unique_id=895866265]
+[node name="Input" type="LineEdit" parent="Panel" unique_id=121477699]
 layout_mode = 0
 offset_left = 10.0
 offset_top = 462.0
 offset_right = 778.0
 offset_bottom = 491.0
+placeholder_text = "Write something"
 
-[node name="Button" type="Button" parent="Panel" unique_id=402684238]
+[node name="Sent" type="Button" parent="Panel" unique_id=66064981]
 layout_mode = 0
 offset_left = 782.0
 offset_top = 462.0
 offset_right = 817.0
 offset_bottom = 491.0
 text = "->"
+
+[connection signal="button_up" from="Panel/Sent" to="." method="OnSent_OnClick"]
