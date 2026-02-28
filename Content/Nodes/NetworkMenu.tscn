@@ -1,0 +1,181 @@
+[gd_scene format=3 uid="uid://cckldudl6dbo0"]
+
+[ext_resource type="Script" uid="uid://206tnx3jnxiv" path="res://Scripts/UI/OptionsMenu.cs" id="1_wtuub"]
+[ext_resource type="Theme" uid="uid://diunfs0nmtp80" path="res://Content/Themes/UI-theme.tres" id="2_7jsq3"]
+[ext_resource type="Theme" uid="uid://15kt1mr77p50" path="res://Content/Themes/options-theme.tres" id="3_0qh3l"]
+
+[sub_resource type="Theme" id="Theme_ev26b"]
+
+[sub_resource type="Theme" id="Theme_avt0o"]
+
+[sub_resource type="Theme" id="Theme_xd628"]
+
+[node name="NetworkMenu" type="Control" unique_id=1180927797]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1666.0
+offset_bottom = -786.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.5, 1.5)
+script = ExtResource("1_wtuub")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=508367416]
+layout_mode = 0
+offset_right = 244.0
+offset_bottom = 294.0
+theme = SubResource("Theme_ev26b")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1605182522]
+layout_mode = 2
+theme = SubResource("Theme_avt0o")
+theme_override_constants/margin_left = 11
+theme_override_constants/margin_right = 11
+theme_override_constants/margin_bottom = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1816272837]
+layout_mode = 2
+theme = SubResource("Theme_xd628")
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=723104963]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "Multiplayer"
+horizontal_alignment = 1
+
+[node name="Options" type="TabContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=277607832]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Host" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options" unique_id=921876571]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host" unique_id=1525437858]
+layout_mode = 2
+theme_override_constants/h_separation = 84
+columns = 2
+
+[node name="Name" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=1384540692]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "  Name"
+
+[node name="NameEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=763053797]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "Zolo"
+placeholder_text = "Name"
+max_length = 10
+context_menu_enabled = false
+emoji_menu_enabled = false
+
+[node name="Port" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=856547440]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "  Port"
+
+[node name="PortEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=2042899575]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "7777"
+placeholder_text = "Port"
+max_length = 5
+context_menu_enabled = false
+emoji_menu_enabled = false
+
+[node name="Pass" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=1604713218]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "  Password"
+
+[node name="PassEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=2041520015]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+placeholder_text = "Pass"
+context_menu_enabled = false
+emoji_menu_enabled = false
+secret = true
+secret_character = "*"
+
+[node name="Difficult" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=1189264444]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "  Difficult"
+
+[node name="OptionButton" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=184959593]
+layout_mode = 2
+selected = 1
+item_count = 3
+popup/item_0/text = "Hard"
+popup/item_0/id = 0
+popup/item_1/text = "Standard"
+popup/item_1/id = 1
+popup/item_2/text = "Low skill"
+popup/item_2/id = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host" unique_id=584878772]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 0
+
+[node name="Button" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/MarginContainer" unique_id=907405713]
+layout_mode = 2
+text = "Host"
+
+[node name="Connect" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options" unique_id=1816291547]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect" unique_id=611011258]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 9
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect/MarginContainer" unique_id=713381614]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="IP2" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect/MarginContainer/VBoxContainer" unique_id=1205526821]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "  IP"
+
+[node name="IP" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect/MarginContainer/VBoxContainer" unique_id=663053676]
+layout_mode = 2
+placeholder_text = "IP"
+
+[node name="Pass" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect/MarginContainer/VBoxContainer" unique_id=1685139403]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+text = "  Password"
+
+[node name="PassEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect/MarginContainer/VBoxContainer" unique_id=106263390]
+layout_mode = 2
+theme = ExtResource("3_0qh3l")
+placeholder_text = "Skip if not using"
+context_menu_enabled = false
+emoji_menu_enabled = false
+secret = true
+secret_character = "*"
+
+[node name="Connect" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Connect/MarginContainer/VBoxContainer" unique_id=790693229]
+layout_mode = 2
+text = "Connect"
+
+[node name="Back" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1148350714]
+layout_mode = 2
+theme = ExtResource("2_7jsq3")
+theme_override_font_sizes/font_size = 22
+text = "Back"
+
+[connection signal="button_up" from="PanelContainer/MarginContainer/VBoxContainer/Back" to="." method="OnBackButton_OnClicked"]

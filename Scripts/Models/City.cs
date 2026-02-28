@@ -9,14 +9,12 @@ public partial class City : Building
 {
     public enum CityLevel
     {
-        Hamlet,
-        Village,
-        Town,
-        City,
-        Metropolis
+        Hamlet = 0,
+        Village = 1,
+        Town = 2,
+        City = 3,
+        Metropolis = 4
     }
-
-
 
     public enum CityType
     {

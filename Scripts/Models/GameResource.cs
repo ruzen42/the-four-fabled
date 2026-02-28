@@ -7,3 +7,13 @@ public enum GameResource
 	Ore,
 	Water
 }
+
+public enum BonusResource
+{
+	None,
+	Forest,
+	Coal,
+	Iron,
+	Gold,
+	Copper
+}

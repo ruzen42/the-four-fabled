@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://gtl6ocm2wvo0"]
+
+[node name="Console" type="Node2D" unique_id=836907667]
+
+[node name="Panel" type="Panel" parent="." unique_id=1485917309]
+offset_right = 822.0
+offset_bottom = 499.0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Panel" unique_id=775080619]
+layout_mode = 0
+offset_right = 816.0
+offset_bottom = 441.0
+
+[node name="LineEdit" type="LineEdit" parent="Panel" unique_id=895866265]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 462.0
+offset_right = 778.0
+offset_bottom = 491.0
+
+[node name="Button" type="Button" parent="Panel" unique_id=402684238]
+layout_mode = 0
+offset_left = 782.0
+offset_top = 462.0
+offset_right = 817.0
+offset_bottom = 491.0
+text = "->"

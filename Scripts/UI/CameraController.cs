@@ -17,18 +17,17 @@ public partial class CameraController : Camera2D
         {
             case InputEventMouseButton mouseButton:
             {
-                if (mouseButton.ButtonIndex == MouseButton.Left)
+                switch (mouseButton.ButtonIndex)
                 {
-                    _isDragging = mouseButton.Pressed;
-                }
-
-                if (mouseButton.ButtonIndex == MouseButton.WheelUp)
-                {
-                    ApplyZoom(1 + ZoomSpeed);
-                }
-                else if (mouseButton.ButtonIndex == MouseButton.WheelDown)
-                {
-                    ApplyZoom(1 - ZoomSpeed);
+                    case MouseButton.Left:
+                        _isDragging = mouseButton.Pressed;
+                        break;
+                    case MouseButton.WheelUp:
+                        ApplyZoom(1 + ZoomSpeed);
+                        break;
+                    case MouseButton.WheelDown:
+                        ApplyZoom(1 - ZoomSpeed);
+                        break;
                 }
 
                 break;

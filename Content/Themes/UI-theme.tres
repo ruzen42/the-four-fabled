@@ -1,14 +1,13 @@
-[gd_resource type="Theme" load_steps=5 format=3 uid="uid://diunfs0nmtp80"]
+[gd_resource type="Theme" format=3 uid="uid://diunfs0nmtp80"]
 
-[ext_resource type="FontFile" uid="uid://bqisxrsw5be5h" path="res://Content/Fonts/Dodis/static/Dosis-Light.ttf" id="1_0pkyp"]
-[ext_resource type="FontFile" uid="uid://md4ks1lx4tl4" path="res://Content/Fonts/Dodis/static/Dosis-ExtraLight.ttf" id="2_3r32o"]
+[ext_resource type="FontFile" uid="uid://csk3w2yb047x1" path="res://Content/Fonts/Faustina/static/Faustina-ExtraBoldItalic.ttf" id="1_d1ffs"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0pkyp"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3r32o"]
 
 [resource]
-default_font = ExtResource("2_3r32o")
+default_font = ExtResource("1_d1ffs")
 default_font_size = 35
 Button/colors/font_hover_color = Color(0.4862745, 0.9490196, 0.9490196, 1)
 Button/constants/outline_size = 3
@@ -20,4 +19,3 @@ Label/colors/font_shadow_color = Color(0, 0, 0, 0)
 Label/constants/line_spacing = 3
 Label/constants/outline_size = 5
 Label/font_sizes/font_size = 36
-Label/fonts/font = ExtResource("1_0pkyp")

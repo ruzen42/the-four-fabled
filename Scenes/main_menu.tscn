@@ -6,7 +6,9 @@
 [ext_resource type="Script" uid="uid://n0v45r8kbir8" path="res://Scripts/UI/MainMenuButtons.cs" id="2_ce3w2"]
 [ext_resource type="Script" uid="uid://cgaugr7f3rp0x" path="res://Scripts/UI/MainMenuUI.cs" id="2_opfnp"]
 [ext_resource type="PackedScene" uid="uid://cxvx5i7f24y2e" path="res://Content/Nodes/OptionsMenu.tscn" id="4_n45e2"]
+[ext_resource type="FontFile" uid="uid://bqpxcprytsm8g" path="res://Content/Fonts/Faustina/static/Faustina-MediumItalic.ttf" id="5_yhxw7"]
 [ext_resource type="PackedScene" uid="uid://cckldudl6dbo0" path="res://Content/Nodes/NetworkMenu.tscn" id="6_cp0ys"]
+[ext_resource type="Script" uid="uid://06fjk58arhf1" path="res://Scripts/UI/MainMenu/NetworkMenu.cs" id="8_trj04"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cp0ys"]
 bg_color = Color(0, 0, 0, 0.36078432)
@@ -51,6 +53,7 @@ NetworkMenu = NodePath("../../NetworkMenu")
 [node name="GameName" type="Label" parent="UI/PanelContainer/ButtonsBox" unique_id=1999367199]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
+theme_override_fonts/font = ExtResource("5_yhxw7")
 theme_override_font_sizes/font_size = 90
 text = "The Four Fabled"
 horizontal_alignment = 1
@@ -108,7 +111,7 @@ offset_right = 991.5
 offset_bottom = 589.0
 grow_horizontal = 1
 grow_vertical = 1
-script = null
+script = ExtResource("8_trj04")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=949978276]
 position = Vector2(910, 524)

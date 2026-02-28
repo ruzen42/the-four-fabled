@@ -37,7 +37,7 @@ project/assembly_name="The Four Fabled"
 
 [gui]
 
-theme/custom_font="res://Content/Fonts/Dodis/Dosis-VariableFont_wght.ttf"
+theme/custom_font="uid://dif038eg0pa44"
 
 [input]
 
