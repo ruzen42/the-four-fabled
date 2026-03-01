@@ -8,7 +8,8 @@ public partial class Console : CanvasLayer
 	private LineEdit _input = null!;
 
 	private Dictionary<string, Action<string[]>> _commands = new();
-
+	private List<string> _history = [];
+	private int _historyIndex = -1;
 	public override void _Ready()
 	{
 		_output = GetNode<RichTextLabel>("Panel/Output");
@@ -50,6 +51,9 @@ public partial class Console : CanvasLayer
 	{
 		Print("> " + text);
 
+		_history.Add(text);
+		_historyIndex = _history.Count;
+		
 		ExecuteCommand(text);
 
 		_input.Clear();
@@ -76,7 +80,52 @@ public partial class Console : CanvasLayer
 
 	public override void _Input(InputEvent @event)
 	{
+		if (@event is InputEventKey { Pressed: true } key && Visible)
+		{
+			switch (key.Keycode)
+			{
+				case Key.Up:
+					HistoryUp();
+					break;
+				case Key.Down:
+					HistoryDown();
+					break;
+			}
+		}
+		
 		if (@event is InputEventKey { Pressed: true, Keycode: Key.Tab }) 
 			Toggle(); 
+	}
+	
+	private void HistoryUp()
+	{
+		if (_history.Count == 0)
+			return;
+
+		_historyIndex--;
+
+		if (_historyIndex < 0)
+			_historyIndex = 0;
+
+		_input.Text = _history[_historyIndex];
+		_input.CaretColumn = _input.Text.Length;
+	}
+	
+	private void HistoryDown()
+	{
+		if (_history.Count == 0)
+			return;
+
+		_historyIndex++;
+
+		if (_historyIndex >= _history.Count)
+		{
+			_historyIndex = _history.Count;
+			_input.Clear();
+			return;
+		}
+
+		_input.Text = _history[_historyIndex];
+		_input.CaretColumn = _input.Text.Length;
 	}
 }
