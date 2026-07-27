@@ -9,7 +9,7 @@ public partial class MainMenuUI : CanvasLayer
 	{
 		_options = GetNode<Control>("OptionsMenu");
 		_network = GetNode<Control>("NetworkMenu");
-		_buttonsBox = GetNode<Control>("ButtonsBox");
+		_buttonsBox = GetNode<Control>("PanelContainer/ButtonsBox");
 		_options.Connect("BackPressed", new Callable(this, nameof(OnOptionsBack)));
 		_network.Connect("BackPressed", new Callable(this, nameof(OnNetworkBack)));
 	}
@@ -17,12 +17,12 @@ public partial class MainMenuUI : CanvasLayer
 	private void OnOptionsBack()
 	{
 		_options.Hide();
-		_buttonsBox.Hide();
+		_buttonsBox.Show();
 	}
 	
 	private void OnNetworkBack()
 	{
 		_network.Hide();
-		_buttonsBox.Hide();
+		_buttonsBox.Show();
 	}
 }

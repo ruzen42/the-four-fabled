@@ -1,0 +1,191 @@
+[gd_scene format=3 uid="uid://cxvx5i7f24y2e"]
+
+[ext_resource type="Script" uid="uid://206tnx3jnxiv" path="res://Scripts/UI/OptionsMenu.cs" id="1_ev26b"]
+[ext_resource type="Theme" uid="uid://diunfs0nmtp80" path="res://Content/Themes/UI-theme.tres" id="2_ev26b"]
+[ext_resource type="Theme" uid="uid://15kt1mr77p50" path="res://Content/Themes/options-theme.tres" id="2_fvedo"]
+
+[sub_resource type="Theme" id="Theme_ev26b"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ev26b"]
+bg_color = Color(0.15294118, 0.15294118, 0.15294118, 0.7176471)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[sub_resource type="Theme" id="Theme_avt0o"]
+
+[sub_resource type="Theme" id="Theme_xd628"]
+
+[sub_resource type="Theme" id="Theme_d8r6v"]
+
+[sub_resource type="Theme" id="Theme_xg20b"]
+
+[node name="OptionsMenu" type="Control" unique_id=1180927797]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1498.0
+offset_bottom = -802.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.5, 1.5)
+script = ExtResource("1_ev26b")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=508367416]
+layout_mode = 0
+offset_right = 540.6667
+offset_bottom = 293.33334
+theme = SubResource("Theme_ev26b")
+theme_override_styles/panel = SubResource("StyleBoxFlat_ev26b")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1605182522]
+layout_mode = 2
+theme = SubResource("Theme_avt0o")
+theme_override_constants/margin_left = 27
+theme_override_constants/margin_right = 27
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1816272837]
+layout_mode = 2
+theme = SubResource("Theme_xd628")
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=723104963]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "Options"
+horizontal_alignment = 1
+
+[node name="Options" type="TabContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=277607832]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Display" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options" unique_id=921876571]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="VSyncButton" type="CheckButton" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Display" unique_id=871795414]
+visible = false
+layout_mode = 2
+theme = ExtResource("2_ev26b")
+text = "VSync"
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Display" unique_id=949369129]
+layout_mode = 2
+theme_override_constants/h_separation = 211
+columns = 2
+
+[node name="ResolutionLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Display/GridContainer" unique_id=444046050]
+layout_mode = 2
+theme = SubResource("Theme_d8r6v")
+theme_override_font_sizes/font_size = 21
+text = " Resolution"
+
+[node name="Resolution" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Display/GridContainer" unique_id=1054809343]
+layout_mode = 2
+selected = 2
+item_count = 6
+popup/item_0/text = "16:9"
+popup/item_0/id = 5
+popup/item_0/separator = true
+popup/item_1/text = "2560x1600"
+popup/item_1/id = 0
+popup/item_2/text = "1920x1080"
+popup/item_2/id = 1
+popup/item_3/text = "1600x900"
+popup/item_3/id = 2
+popup/item_4/text = "1366x768"
+popup/item_4/id = 3
+popup/item_5/text = "1080x720"
+popup/item_5/id = 4
+
+[node name="GraphicsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Display/GridContainer" unique_id=249475626]
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+text = " Graphics   "
+
+[node name="Graphics" type="OptionButton" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Display/GridContainer" unique_id=52911756]
+layout_mode = 2
+selected = 1
+item_count = 4
+popup/item_0/text = "High"
+popup/item_0/id = 3
+popup/item_1/text = "Medium"
+popup/item_1/id = 2
+popup/item_2/text = "Low"
+popup/item_2/id = 1
+popup/item_3/text = "Celeron"
+popup/item_3/id = 0
+
+[node name="Sound" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options" unique_id=1816291547]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="SoundTurn" type="CheckButton" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Sound" unique_id=1343126748]
+layout_mode = 2
+theme = ExtResource("2_fvedo")
+button_pressed = true
+text = "Sound
+"
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Sound" unique_id=1477097400]
+layout_mode = 2
+theme = ExtResource("2_fvedo")
+text = "  Master"
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Sound" unique_id=2076358630]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_right = 14
+
+[node name="HSlider" type="HSlider" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Sound/MarginContainer" unique_id=1681753135]
+layout_mode = 2
+tooltip_text = "Change master volume"
+theme_override_constants/tick_offset = 0
+value = 60.0
+ticks_position = 3
+
+[node name="Saves" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options" unique_id=257948465]
+visible = false
+layout_mode = 2
+theme = SubResource("Theme_xg20b")
+metadata/_tab_index = 2
+
+[node name="AutoSaves" type="CheckButton" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Saves" unique_id=836156897]
+layout_mode = 2
+theme = ExtResource("2_fvedo")
+button_pressed = true
+text = "Autosaves
+"
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Saves" unique_id=1578553844]
+layout_mode = 2
+theme_override_constants/h_separation = 190
+columns = 2
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Saves/GridContainer" unique_id=1554583420]
+layout_mode = 2
+text = "  Autosaves frequency"
+
+[node name="SpinBox" type="SpinBox" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Saves/GridContainer" unique_id=704125178]
+layout_mode = 2
+tooltip_text = "Change autosaves frequency (in game turns)"
+min_value = 1.0
+max_value = 500.0
+step = 5.0
+value = 21.0
+rounded = true
+alignment = 1
+suffix = "turns"
+
+[node name="Back" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1148350714]
+layout_mode = 2
+theme = ExtResource("2_ev26b")
+theme_override_font_sizes/font_size = 22
+text = "Back"
+
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Back" to="." method="_OnBackPressed"]

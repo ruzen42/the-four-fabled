@@ -14,16 +14,17 @@ config/name="The Four Fabled"
 config/name_localized={
 "ru": "Четыре Легенды"
 }
-config/version="0.1.0"
+config/version="26.7"
 run/main_scene="uid://baoyr1t458drm"
 config/features=PackedStringArray("4.6", "C#", "Mobile")
+boot_splash/stretch_mode=0
 boot_splash/image="uid://cv1mrfn6eqnnw"
 config/icon="uid://cv1mrfn6eqnnw"
-boot_splash/fullsize=false
 
 [autoload]
 
 Loader="*res://Scripts/AutoLoad/Loader.cs"
+Saves="*uid://bem66leskvsy5"
 
 [display]
 
@@ -37,7 +38,7 @@ project/assembly_name="The Four Fabled"
 
 [gui]
 
-theme/custom_font="uid://dif038eg0pa44"
+theme/custom_font="uid://v6olb5h3kvyo"
 
 [input]
 

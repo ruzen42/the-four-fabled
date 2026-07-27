@@ -1,13 +1,10 @@
 [gd_resource type="Theme" format=3 uid="uid://diunfs0nmtp80"]
 
-[ext_resource type="FontFile" uid="uid://csk3w2yb047x1" path="res://Content/Fonts/Faustina/static/Faustina-ExtraBoldItalic.ttf" id="1_d1ffs"]
-
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0pkyp"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3r32o"]
 
 [resource]
-default_font = ExtResource("1_d1ffs")
 default_font_size = 35
 Button/colors/font_hover_color = Color(0.4862745, 0.9490196, 0.9490196, 1)
 Button/constants/outline_size = 3

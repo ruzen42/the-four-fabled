@@ -24,6 +24,13 @@ public partial class Unit : Node2D
 	
 	public List<UnitEffect> Effects { get; private set; }
 	public string Name { get; private set; }
+	
+	public Vector2I Position { get; private set; }
+
+	public void Move(Vector2I pos)
+	{
+		Position = pos;	
+	}
 
 	public uint Health { get; private set; } = 100;
 

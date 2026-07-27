@@ -1,12 +1,110 @@
 [gd_scene format=3 uid="uid://wwvww0uoyeic"]
 
 [ext_resource type="Script" uid="uid://7ydg64m43db8" path="res://Scripts/GameLogic/Unit.cs" id="1_xly75"]
+[ext_resource type="Texture2D" uid="uid://d2eolwlw23uxy" path="res://Content/2DArts/warrior.png" id="2_fiwtu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_xly75"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_fiwtu")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fiwtu"]
+bg_color = Color(0.25252762, 0.1030835, 0.09347511, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+corner_detail = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jps1m"]
+bg_color = Color(0.6, 0.14901961, 0.08627451, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rjgys"]
+bg_color = Color(0.06469707, 0.18022689, 0.12626898, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+corner_detail = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_735sv"]
+bg_color = Color(0.23582992, 0.51466125, 0.38369074, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="Unit" type="Node2D" unique_id=44136411]
 script = ExtResource("1_xly75")
 
-[node name="Name" type="Label" parent="." unique_id=1387726643]
-offset_right = 40.0
-offset_bottom = 21.0
-
 [node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=615337126]
+z_index = -2
+position = Vector2(64, 64)
+sprite_frames = SubResource("SpriteFrames_xly75")
+
+[node name="Control" type="Control" parent="." unique_id=71547030]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 5.0
+offset_top = -18.0
+offset_right = 133.0
+offset_bottom = 40.0
+
+[node name="Stats" type="HBoxContainer" parent="Control" unique_id=1969290212]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 19.0
+offset_right = 99.0
+offset_bottom = 40.0
+
+[node name="Name" type="Label" parent="Control/Stats" unique_id=1387726643]
+layout_mode = 2
+text = "Name"
+
+[node name="Lvl" type="Label" parent="Control/Stats" unique_id=2059414148]
+layout_mode = 2
+text = "(1 lvl)"
+
+[node name="Bar" type="VBoxContainer" parent="Control" unique_id=893672214]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 20.0
+offset_right = 116.0
+offset_bottom = 54.0
+alignment = 1
+
+[node name="Health" type="ProgressBar" parent="Control/Bar" unique_id=1275042774]
+z_index = -1
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.75
+theme_override_colors/font_color = Color(0.60576886, 0.3491753, 0.1889736, 1)
+theme_override_colors/font_outline_color = Color(0.646029, 0.646029, 0.646029, 1)
+theme_override_constants/outline_size = 101
+theme_override_styles/background = SubResource("StyleBoxFlat_fiwtu")
+theme_override_styles/fill = SubResource("StyleBoxFlat_jps1m")
+value = 50.0
+show_percentage = false
+
+[node name="Exp" type="ProgressBar" parent="Control/Bar" unique_id=1907420433]
+z_index = -1
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.25
+theme_override_colors/font_color = Color(0.60576886, 0.3491753, 0.1889736, 1)
+theme_override_colors/font_outline_color = Color(0.646029, 0.646029, 0.646029, 1)
+theme_override_constants/outline_size = 101
+theme_override_styles/background = SubResource("StyleBoxFlat_rjgys")
+theme_override_styles/fill = SubResource("StyleBoxFlat_735sv")
+value = 50.0
+show_percentage = false

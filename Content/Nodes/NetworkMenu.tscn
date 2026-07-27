@@ -1,10 +1,17 @@
 [gd_scene format=3 uid="uid://cckldudl6dbo0"]
 
-[ext_resource type="Script" uid="uid://206tnx3jnxiv" path="res://Scripts/UI/OptionsMenu.cs" id="1_wtuub"]
+[ext_resource type="Script" uid="uid://06fjk58arhf1" path="res://Scripts/UI/MainMenu/NetworkMenu.cs" id="1_wtuub"]
 [ext_resource type="Theme" uid="uid://diunfs0nmtp80" path="res://Content/Themes/UI-theme.tres" id="2_7jsq3"]
 [ext_resource type="Theme" uid="uid://15kt1mr77p50" path="res://Content/Themes/options-theme.tres" id="3_0qh3l"]
 
 [sub_resource type="Theme" id="Theme_ev26b"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wtuub"]
+bg_color = Color(0.15294118, 0.15294118, 0.15294118, 0.7176471)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
 
 [sub_resource type="Theme" id="Theme_avt0o"]
 
@@ -15,8 +22,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -1666.0
-offset_bottom = -786.0
+offset_right = -1556.6666
+offset_bottom = -754.6666
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1.5, 1.5)
@@ -24,16 +31,18 @@ script = ExtResource("1_wtuub")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=508367416]
 layout_mode = 0
-offset_right = 244.0
-offset_bottom = 294.0
+offset_top = -1.3333334
+offset_right = 363.0
+offset_bottom = 324.66666
 theme = SubResource("Theme_ev26b")
+theme_override_styles/panel = SubResource("StyleBoxFlat_wtuub")
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1605182522]
 layout_mode = 2
 theme = SubResource("Theme_avt0o")
-theme_override_constants/margin_left = 11
-theme_override_constants/margin_right = 11
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 27
+theme_override_constants/margin_right = 27
+theme_override_constants/margin_bottom = 16
 
 [node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1816272837]
 layout_mode = 2
@@ -68,7 +77,7 @@ text = "  Name"
 [node name="NameEdit" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer/Options/Host/GridContainer" unique_id=763053797]
 layout_mode = 2
 theme = ExtResource("3_0qh3l")
-text = "Zolo"
+text = "New Game"
 placeholder_text = "Name"
 max_length = 10
 context_menu_enabled = false
@@ -178,4 +187,4 @@ theme = ExtResource("2_7jsq3")
 theme_override_font_sizes/font_size = 22
 text = "Back"
 
-[connection signal="button_up" from="PanelContainer/MarginContainer/VBoxContainer/Back" to="." method="OnBackButton_OnClicked"]
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/Back" to="." method="_OnBackPressed"]
