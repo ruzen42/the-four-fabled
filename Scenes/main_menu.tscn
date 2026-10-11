@@ -91,6 +91,7 @@ text = "Exit"
 flat = true
 
 [node name="OptionsMenu" parent="UI" unique_id=23080875 instance=ExtResource("4_n45e2")]
+visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5

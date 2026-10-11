@@ -5,7 +5,8 @@ public enum GameResource
 	Wood,
 	Food,
 	Ore,
-	Water
+	Water,
+	Product
 }
 
 public enum BonusResource

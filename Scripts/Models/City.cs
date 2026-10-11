@@ -25,20 +25,19 @@ public partial class City : Building
 
     [Export] public string Name { get; set; }
     [Export] public uint Power { get; set; }
-    [Export] public CityLevel Level { get; set; }
+    [Export] public CityLevel Level { get; private set; }
     [Export] public CityType Type { get; set; }
-    [Export] public Vector2 Center { get; set; }
-
     [Export] public CivilizationType Civilization { get; private set; }
     public bool IsCapital => Type == CityType.Capital;
 
     public List<Tile> Tiles { get; set; } = [];
+    
+    public int Population { get; set; }
 
-    public City(CivilizationType type, CityType cityType, Tile center, string? name = "Linux") : base(center.Position)
+    public City(CivilizationType type, CityType cityType, Tile center, string? name) : base(center.Position)
     {
         Civilization = type;
         Type = cityType;
-        Center = center.Position;
         Tiles.Add(center);
 
         if (name is null)

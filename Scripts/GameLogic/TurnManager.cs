@@ -16,21 +16,23 @@ public partial class TurnManager : Node
     public event Action<CivilizationStats> OnTurnStarted;
     public event Action OnRoundEnded;
 
-    public void Initialize(List<CivilizationStats> civs)
+    public void Initialize()
     {
-        _participants = civs;
+
         StartTurn();
     }
 
-    public void RequestEndTurn(CivilizationStats.CivilizationType civType)
+    public void ClientRequestEndTurn(CivilizationStats.CivilizationType civType)
     {
         if (civType != CurrentActiveCiv.Type) return;
 
         GD.Print($"Civ {civType} finished their turn.");
-        EndTurn();
+        
+        RpcId(1, nameof(ServerProcessEndTurn), (int)civType);
     }
 
-    private void EndTurn()
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ServerProcessEndTurn()
     {
         _currentCivIndex++;
 
@@ -64,10 +66,10 @@ public partial class TurnManager : Node
                 var totalOre     = (uint)city.Tiles.Sum(t => t.GetOre());
                 var totalWood    = (uint)city.Tiles.Sum(t => t.GetWood());
                 civ.Resources[GameResource.Food] += totalFood;
-                civ.Resources[GameResource.Ore] += totalFood;
                 civ.Resources[GameResource.Water] += totalWater;
                 civ.Resources[GameResource.Ore] += totalOre;
-                civ.Resources[GameResource.Wood] += totalOre;
+                civ.Resources[GameResource.Wood] += totalWood;
+                civ.Resources[GameResource.Product] += totalProduct;
             }
         }
         

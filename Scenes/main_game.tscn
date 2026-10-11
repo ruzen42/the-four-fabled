@@ -305,7 +305,6 @@ events = [SubResource("InputEventKey_6j5ir")]
 
 [node name="Cities" type="TileMapLayer" parent="." unique_id=2041010839]
 z_index = 1
-tile_map_data = PackedByteArray("AAAjABEAAAAAAAEAAADq/xAAAAAAAAEAAAD9//n/AAAAAAEAAAAZAP3/AAAAAAEAAAA=")
 tile_set = SubResource("TileSet_0xqxu")
 
 [node name="Selection" type="TileMapLayer" parent="." unique_id=1160350401]

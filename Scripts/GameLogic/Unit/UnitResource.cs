@@ -13,6 +13,6 @@ public partial class UnitResource : Resource
     [Export] public uint Level { get; set; }
     [Export] public uint Experience { get; set; }
     [Export] public uint MovementPoints { get; set; }
-    [Export] public Texture2D Icon { get; set; }
+    [Export] public Texture2D? Icon { get; set; }
     [Export] public uint AttackPower { get; set; }
 }
