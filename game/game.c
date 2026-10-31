@@ -8,13 +8,13 @@
 #include "game/colors.h"
 
 // isometry params
-#define TILE_WIDTH  64
-#define TILE_HEIGHT 32
-#define MAP_SIZE    10
+#define TILE_WIDTH  128 
+#define TILE_HEIGHT 48
+#define MAP_SIZE    12 
 
 // screen offset (map origin)
-static const float OFFSET_X = 400.0f;
-static const float OFFSET_Y = 100.0f;
+static const float OFFSET_X = 800.0f;
+static const float OFFSET_Y = 300.0f;
 
 // state, in future will be a struct 
 static int  g_selX = -1;
@@ -179,4 +179,5 @@ DrawGame(void)
     }
 
     DrawText("RMB: clear selection   Esc: quit", 10, 70, 16, COL_TEXT_DIM);
+    DrawFPS(10, 100); 
 }
