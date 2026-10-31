@@ -1,0 +1,92 @@
+#!/bin/sh
+
+set -eu
+
+if [ "$#" -ne 2 ]; then
+    printf 'usage: %s <binary> <destination>\n' "$0" >&2
+    exit 1
+fi
+
+binary=$1
+destination=$2
+
+case $binary in
+    /*) ;;
+    *) binary=$PWD/$binary ;;
+esac
+
+if [ ! -f "$binary" ]; then
+    printf 'error: binary not found: %s\n' "$binary" >&2
+    exit 1
+fi
+
+if ! mkdir -p "$destination"; then
+    printf 'error: cannot create destination: %s\n' "$destination" >&2
+    exit 1
+fi
+
+destination=$(CDPATH= cd -P "$destination" && pwd) || {
+    printf 'error: cannot resolve destination: %s\n' "$destination" >&2
+    exit 1
+}
+
+tmpdir=${TMPDIR:-/tmp}/copy_dynamic_deps.$$
+if ! (umask 077 && mkdir "$tmpdir"); then
+    printf 'error: cannot create temporary directory\n' >&2
+    exit 1
+fi
+seen=$tmpdir/seen
+ldd_output=$tmpdir/ldd-output
+deps=$tmpdir/dependencies
+: > "$seen"
+: > "$ldd_output"
+: > "$deps"
+trap 'rm -rf "$tmpdir"' 0
+trap 'exit 1' HUP INT TERM
+
+copy_library()
+{
+    lib=$1
+
+    [ -f "$lib" ] || return 0
+
+    case $lib in
+        /*) ;;
+        *) lib=$PWD/$lib ;;
+    esac
+
+    if grep -F -x "$lib" "$seen" >/dev/null 2>&1; then
+        return 0
+    fi
+    printf '%s\n' "$lib" >> "$seen"
+
+    target=$destination$lib
+    target_dir=${target%/*}
+
+    if ! mkdir -p "$target_dir"; then
+        printf 'error: cannot create directory: %s\n' "$target_dir" >&2
+        return 1
+    fi
+
+    if ! cp -L -p "$lib" "$target"; then
+        printf 'error: failed to copy: %s\n' "$lib" >&2
+        return 1
+    fi
+
+    printf 'copied: %s\n' "$lib"
+}
+
+if ! ldd "$binary" > "$ldd_output" 2>/dev/null; then
+    printf 'error: ldd failed for: %s\n' "$binary" >&2
+    exit 1
+fi
+
+awk '
+    $2 == "=>" && $3 ~ /^\// { print $3; next }
+    $1 ~ /^\// { print $1 }
+' "$ldd_output" > "$deps"
+
+while IFS= read -r lib || [ -n "$lib" ]; do
+    [ -n "$lib" ] || continue
+    copy_library "$lib"
+done < "$deps"
