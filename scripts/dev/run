@@ -1,0 +1,10 @@
+#!/bin/sh
+
+CONTAINER=fourfabled-dev-cs
+IMAGE=fourfabled-dev
+
+if podman container exists "$CONTAINER"; then
+    podman attach "$CONTAINER"
+else
+    podman run -it -v .:/work --name "$CONTAINER" "$IMAGE" 
+fi
