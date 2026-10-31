@@ -7,9 +7,11 @@ project(
 )
 
 dependencies = [
+  dependency('raylib', version : '>=4.5.0')
 ]
 
 sources = [
+  'game/game.c',
   'client.c',
 ]
 
