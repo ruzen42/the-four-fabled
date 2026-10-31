@@ -2,8 +2,10 @@
  * 31/10/2026 ruzen42 */
 
 #include <raylib.h>
-#include <stdio.h>
 #include <math.h>
+
+#include "game/game.h"
+#include "game/colors.h"
 
 // isometry params
 #define TILE_WIDTH  64
@@ -14,21 +16,19 @@
 static const float OFFSET_X = 400.0f;
 static const float OFFSET_Y = 100.0f;
 
-static const Color COL_BG           = { 26,  28,  36, 255 };  // #1A1C24
-static const Color COL_TILE         = { 46,  52,  64, 255 };  // #2E3440
-static const Color COL_TILE_HOVER   = { 224, 176, 64, 255 };  // #E0B040 
-static const Color COL_TILE_SEL     = { 64,  200, 224, 255 }; // #40C8E0 
-static const Color COL_TILE_SEL_HOV = { 128, 240, 255, 255 }; // #80F0FF 
+// state, in future will be a struct 
+static int  g_selX = -1;
+static int  g_selY = -1;
 
-static const Color COL_OUTLINE      = { 74,  74,  90, 120 };  
-static const Color COL_OUTLINE_SEL  = { 64,  200, 224, 255 }; 
+static int  g_hoverX = 0;
+static int  g_hoverY = 0;
+static bool g_hoverInMap = false;
 
-static const Color COL_TEXT         = { 232, 232, 240, 255 };// #E8E8F0
-static const Color COL_TEXT_DIM     = { 144, 144, 160, 255 };// #9090A0
-
+static int  g_prevGridX = -999;
+static int  g_prevGridY = -999;
 
 // in-game map -> what player saw
-Vector2
+static Vector2
 IsoToScreen(int gridX, int gridY)
 {
     Vector2 screen;
@@ -39,7 +39,7 @@ IsoToScreen(int gridX, int gridY)
 
 // what player saw -> in-game map 
 // reversed IsoToScreen()
-Vector2
+static Vector2
 ScreenToIso(float screenX, float screenY)
 {
     Vector2 grid;
@@ -64,7 +64,7 @@ IsoTileVerts(int gridX, int gridY, Vector2 v[4])
     v[3] = (Vector2){ pos.x - TILE_WIDTH / 2.0f,  pos.y + TILE_HEIGHT / 2.0f };// left
 }
 
-void
+static void
 DrawIsoTile(int gridX, int gridY, Color color, Color outLine, float lineThick)
 {
     Vector2 v[4];
@@ -78,111 +78,105 @@ DrawIsoTile(int gridX, int gridY, Color color, Color outLine, float lineThick)
     DrawLineEx(v[3], v[0], lineThick, outLine);
 }
 
-int
-RunGame()
+void
+GameReset(void)
 {
-    const int screenWidth  = 800;
-    const int screenHeight = 450;
+    g_selX = g_selY = -1;
+    g_hoverX = g_hoverY = 0;
+    g_hoverInMap = false;
+    g_prevGridX = g_prevGridY = -999;
 
-    SetTraceLogLevel(LOG_DEBUG);
-
-    InitWindow(screenWidth, screenHeight, "The Four Fabled");
-    SetTargetFPS(60);
-
-    TraceLog(LOG_INFO, "Game started: map %dx%d, tile %dx%d",
+    TraceLog(LOG_INFO, "GameReset: map %dx%d, tile %dx%d",
              MAP_SIZE, MAP_SIZE, TILE_WIDTH, TILE_HEIGHT);
+}
 
-    int selectedX = -1;
-    int selectedY = -1;
+GameScreen
+UpdateGame(void)
+{
+    if (IsKeyPressed(KEY_ESCAPE))
+        return SCREEN_QUIT;
 
-    int prevGridX = -999;
-    int prevGridY = -999;
+    Vector2 mousePos = GetMousePosition();
 
-    while (!WindowShouldClose()) {
-        Vector2 mousePos = GetMousePosition();
+    Vector2 isoPos = ScreenToIso(mousePos.x - OFFSET_X,
+                                 mousePos.y - OFFSET_Y - TILE_HEIGHT);
 
-        Vector2 isoPos = ScreenToIso(mousePos.x - OFFSET_X,
-                                     mousePos.y - OFFSET_Y - TILE_HEIGHT);
+    int gridX = (int)floor(isoPos.x);
+    int gridY = (int)floor(isoPos.y);
 
-        int gridX = (int)floor(isoPos.x);
-        int gridY = (int)floor(isoPos.y);
+    g_hoverX = gridX;
+    g_hoverY = gridY;
+    g_hoverInMap = (unsigned)gridX < MAP_SIZE &&
+                   (unsigned)gridY < MAP_SIZE;
 
-        bool inMap = (unsigned)gridX < MAP_SIZE &&
-                     (unsigned)gridY < MAP_SIZE;
-
-        if (gridX != prevGridX || gridY != prevGridY) {
-            if (inMap) {
-                TraceLog(LOG_TRACE, "Hover -> (%d, %d)", gridX, gridY);
-            } else {
-                TraceLog(LOG_TRACE, "Hover -> outside (%d, %d)", gridX, gridY);
-            }
-            prevGridX = gridX;
-            prevGridY = gridY;
+    if (gridX != g_prevGridX || gridY != g_prevGridY) {
+        if (g_hoverInMap) {
+            TraceLog(LOG_TRACE, "Hover -> (%d, %d)", gridX, gridY);
+        } else {
+            TraceLog(LOG_TRACE, "Hover -> outside (%d, %d)", gridX, gridY);
         }
-
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            if (inMap) {
-                selectedX = gridX;
-                selectedY = gridY;
-                TraceLog(LOG_INFO, "Selected tile (%d, %d)", gridX, gridY);
-            } else {
-                TraceLog(LOG_DEBUG, "Click outside map: grid (%d, %d)",
-                         gridX, gridY);
-            }
-        }
-
-        if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) &&
-            selectedX >= 0 && selectedY >= 0) {
-            TraceLog(LOG_INFO, "Selection cleared (was %d, %d)",
-                     selectedX, selectedY);
-            selectedX = -1;
-            selectedY = -1;
-        }
-
-        BeginDrawing();
-        {
-            ClearBackground(COL_BG);
-
-            for (int y = 0; y < MAP_SIZE; y++) {
-                for (int x = 0; x < MAP_SIZE; x++) {
-                    bool isHover = inMap && x == gridX && y == gridY;
-                    bool isSel   = (x == selectedX && y == selectedY);
-
-                    Color tileColor = COL_TILE;
-                    Color outline   = COL_OUTLINE;
-                    float thick     = 1.0f;
-
-                    if (isHover) tileColor = COL_TILE_HOVER;
-
-                    if (isSel) {
-                        tileColor = COL_TILE_SEL;
-                        outline   = COL_OUTLINE_SEL;
-                        thick     = 2.0f;
-                    }
-
-                    if (isSel && isHover) tileColor = COL_TILE_SEL_HOV;
-
-                    DrawIsoTile(x, y, tileColor, outline, thick);
-                }
-            }
-
-            DrawText(TextFormat("Grid: (%d, %d)", gridX, gridY),
-                     10, 10, 20, COL_TEXT);
-
-            if (selectedX >= 0 && selectedY >= 0) {
-                DrawText(TextFormat("Selected: (%d, %d)",
-                                    selectedX, selectedY),
-                         10, 40, 20, COL_TILE_SEL);
-            } else {
-                DrawText("Click to select tile", 10, 40, 20, COL_TEXT_DIM);
-            }
-
-            DrawText("RMB: clear selection", 10, 70, 16, COL_TEXT_DIM);
-        }
-        EndDrawing();
+        g_prevGridX = gridX;
+        g_prevGridY = gridY;
     }
 
-    TraceLog(LOG_INFO, "Game closed");
-    CloseWindow();
-    return 0;
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (g_hoverInMap) {
+            g_selX = gridX;
+            g_selY = gridY;
+            TraceLog(LOG_INFO, "Selected tile (%d, %d)", gridX, gridY);
+        } else {
+            TraceLog(LOG_DEBUG, "Click outside map: grid (%d, %d)",
+                     gridX, gridY);
+        }
+    }
+
+    if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) &&
+        g_selX >= 0 && g_selY >= 0) {
+        TraceLog(LOG_INFO, "Selection cleared (was %d, %d)", g_selX, g_selY);
+        g_selX = -1;
+        g_selY = -1;
+    }
+
+    return SCREEN_GAME;
+}
+
+void
+DrawGame(void)
+{
+    ClearBackground(COL_BG);
+
+    for (int y = 0; y < MAP_SIZE; y++) {
+        for (int x = 0; x < MAP_SIZE; x++) {
+            bool isHover = g_hoverInMap && x == g_hoverX && y == g_hoverY;
+            bool isSel   = (x == g_selX && y == g_selY);
+
+            Color tileColor = COL_TILE;
+            Color outline   = COL_OUTLINE;
+            float thick     = 1.0f;
+
+            if (isHover) tileColor = COL_TILE_HOVER;
+
+            if (isSel) {
+                tileColor = COL_TILE_SEL;
+                outline   = COL_OUTLINE_SEL;
+                thick     = 2.0f;
+            }
+
+            if (isSel && isHover) tileColor = COL_TILE_SEL_HOV;
+
+            DrawIsoTile(x, y, tileColor, outline, thick);
+        }
+    }
+
+    DrawText(TextFormat("Grid: (%d, %d)", g_hoverX, g_hoverY),
+             10, 10, 20, COL_TEXT);
+
+    if (g_selX >= 0 && g_selY >= 0) {
+        DrawText(TextFormat("Selected: (%d, %d)", g_selX, g_selY),
+                 10, 40, 20, COL_TILE_SEL);
+    } else {
+        DrawText("Click to select tile", 10, 40, 20, COL_TEXT_DIM);
+    }
+
+    DrawText("RMB: clear selection   Esc: quit", 10, 70, 16, COL_TEXT_DIM);
 }
