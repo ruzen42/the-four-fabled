@@ -39,20 +39,6 @@ typedef struct {
 static VisibleTileData g_visibleTiles[MAX_VISIBLE_TILES];
 static int g_visibleCount = 0;
 
-static void
-ScreenToIsoGrid(Vector2 mouseScreen, Camera2D cam, int *gx, int *gy)
-{
-    Vector2 w = GetScreenToWorld2D(mouseScreen, cam);
-
-    float wy = w.y - TILE_HEIGHT * 0.5f;
-
-    float fx = (w.x / (TILE_WIDTH  * 0.5f) + wy / (TILE_HEIGHT * 0.5f)) * 0.5f;
-    float fy = (wy  / (TILE_HEIGHT * 0.5f) - w.x / (TILE_WIDTH * 0.5f)) * 0.5f;
-
-    *gx = (int)floorf(fx + 0.5f);
-    *gy = (int)floorf(fy + 0.5f);
-}
-
 static Vector2
 IsoToScreen(float worldX, float worldY)
 {
@@ -60,29 +46,6 @@ IsoToScreen(float worldX, float worldY)
     w.x = (worldX - worldY) * (TILE_WIDTH  / 2.0f);
     w.y = (worldX + worldY) * (TILE_HEIGHT / 2.0f);
     return w;
-}
-
-static bool 
-IsTileVisible(Camera2D cam, int gx, int gy)
-{
-    Vector2 pos = IsoToScreen(gx, gy);
-    
-    float minX = pos.x - TILE_WIDTH / 2.0f;
-    float maxX = pos.x + TILE_WIDTH / 2.0f;
-    float minY = pos.y; 
-    float maxY = pos.y + TILE_HEIGHT; 
-
-    Vector2 screenTopLeft = (Vector2){0, 0};
-    Vector2 worldTopLeft = GetScreenToWorld2D(screenTopLeft, cam);
-    
-    Vector2 screenBottomRight = (Vector2){GetScreenWidth(), GetScreenHeight()};
-    Vector2 worldBottomRight = GetScreenToWorld2D(screenBottomRight, cam);
-    
-    // simpel AABB checking
-    if (maxX < worldTopLeft.x || minX > worldBottomRight.x) return false;
-    if (maxY < worldTopLeft.y || minY > worldBottomRight.y) return false;
-
-    return true;
 }
 
 static void
@@ -120,16 +83,30 @@ PointInTileWorld(Vector2 mouseScreen, int gx, int gy, Camera2D cam)
 static bool
 PickTileWorld(Vector2 mouseScreen, Camera2D cam, int *outX, int *outY)
 {
-    for (int i = 0; i < g_visibleCount; i++) {
-        int gx = g_visibleTiles[i].gx;
-        int gy = g_visibleTiles[i].gy;
-        
-        if (PointInTileWorld(mouseScreen, gx, gy, cam)) {
-            *outX = gx;
-            *outY = gy;
-            return true;
+    Vector2 w = GetScreenToWorld2D(mouseScreen, cam);
+    float wy = w.y - TILE_HEIGHT * 0.5f;
+
+    float fx = (w.x / (TILE_WIDTH  * 0.5f) + wy / (TILE_HEIGHT * 0.5f)) * 0.5f;
+    float fy = (wy  / (TILE_HEIGHT * 0.5f) - w.x / (TILE_WIDTH  * 0.5f)) * 0.5f;
+
+    int bx = (int)floorf(fx + 0.5f);
+    int by = (int)floorf(fy + 0.5f);
+
+    // check candidate and closer heigrou O(1) 
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int cx = bx + dx;
+            int cy = by + dy;
+            if (PointInTileWorld(mouseScreen, cx, cy, cam)) {
+                *outX = cx;
+                *outY = cy;
+                return true;
+            }
         }
     }
+    
+    *outX = bx;
+    *outY = by;
     return false;
 }
 
@@ -216,7 +193,7 @@ UpdateGame(void)
 
     int gx = -1;
     int gy = -1;
-    ScreenToIsoGrid(GetMousePosition(), camera, &gx, &gy);
+    //ScreenToIsoGrid(GetMousePosition(), camera, &gx, &gy);
     bool inMap = PickTileWorld(GetMousePosition(), camera, &gx, &gy);
     inMap = inMap
          && (unsigned)gx < world.width
@@ -286,21 +263,24 @@ DrawGame(void)
     Vector2 ms = GetMousePosition();
     Vector2 mw = GetScreenToWorld2D(ms, camera);
 
+    Vector2 worldTopLeft = GetScreenToWorld2D((Vector2){0, 0}, camera);
+    Vector2 worldBottomRight = 
+        GetScreenToWorld2D((Vector2){GetScreenWidth(), GetScreenHeight()}, camera);
+
     BeginMode2D(camera);
     {
-        DrawCircleV(mw, 4.0f / camera.zoom, RED);          
-
-        if (hoverInMap) {
-            Vector2 p = IsoToScreen(hoverX, hoverY);
-            DrawCircleV((Vector2){ p.x, p.y + TILE_HEIGHT*0.5f },
-                4.0f / camera.zoom, BLUE);          
-        }
-        
         g_visibleCount = 0;
 
         for (uint32_t y = 0; y < world.height; y++) {
             for (uint32_t x = 0; x < world.width; x++) {
-                if (!IsTileVisible(camera, (int)x, (int)y)) continue;
+                Vector2 pos = IsoToScreen((int)x, (int)y);
+                float minX = pos.x - TILE_WIDTH * 0.5f;
+                float maxX = pos.x + TILE_WIDTH * 0.5f;
+                float minY = pos.y; 
+                float maxY = pos.y + TILE_HEIGHT; 
+
+                if (maxX < worldTopLeft.x || minX > worldBottomRight.x) continue;
+                if (maxY < worldTopLeft.y || minY > worldBottomRight.y) continue;
 
                 if (g_visibleCount >= MAX_VISIBLE_TILES) break;
 
@@ -313,10 +293,7 @@ DrawGame(void)
                 bool isSel   = ((int)x == selX && (int)y == selY);
 
                 if (isHover) tileColor = COL_TILE_HOVER;
-
-                if (isSel) {
-                    tileColor = COL_TILE_SEL;
-                }
+                if (isSel)   tileColor = COL_TILE_SEL;
                 if (isSel && isHover) tileColor = COL_TILE_SEL_HOV;
 
                 IsoTileVerts((int)x, (int)y, g_visibleTiles[g_visibleCount].v);
@@ -326,9 +303,7 @@ DrawGame(void)
                 g_visibleCount++;
             }
         }
-        
 
-        // must works with zero
         rlSetTexture(0);
         rlBegin(RL_TRIANGLES);
 
@@ -337,12 +312,10 @@ DrawGame(void)
             Color col = g_visibleTiles[i].color;
             
             rlColor4ub(col.r, col.g, col.b, col.a);
-            // first triagle for romb (0, 1, 2)
             rlVertex2f(v[0].x, v[0].y);
             rlVertex2f(v[1].x, v[1].y);
             rlVertex2f(v[2].x, v[2].y);
 
-            // second triagle for romb (0, 2, 3)
             rlColor4ub(col.r, col.g, col.b, col.a);
             rlVertex2f(v[0].x, v[0].y);
             rlVertex2f(v[2].x, v[2].y);
@@ -365,8 +338,8 @@ DrawGame(void)
             DrawIsoTileOutlineOnly(selX, selY, COL_OUTLINE_SEL, 2.0f);
         }
     }
-    EndMode2D();
-    
+    EndMode2D();    
+
     DrawCircleV(GetMousePosition(), 4.0f, GREEN);
     Vector2 dpi = GetWindowScaleDPI();
     DrawText(TextFormat("mouse scr (%.0f,%.0f)  world (%.1f,%.1f)",
