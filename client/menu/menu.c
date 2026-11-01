@@ -6,6 +6,9 @@
 #include "client/menu/menu.h"
 #include "client/game/colors.h"
 
+#define GAME_TITLE     "THE FOUR FABLED"
+#define GAME_SUBTITLE  "pc edition v0.1.0"
+
 typedef enum MenuItem {
     ITEM_START = 0,
     ITEM_QUIT,
@@ -23,6 +26,9 @@ typedef struct MenuLayout {
     Vector2   hint1Pos;
     Vector2   hint2Pos;
 } MenuLayout;
+
+static MenuLayout s_layout = { 0 };
+static bool s_layoutInitialized = false;
 
 static MenuLayout
 ComputeLayout(void)
@@ -53,14 +59,14 @@ ComputeLayout(void)
     if (y < 20.0f) y = 20.0f;
 
     // title
-    const char *title = "THE FOUR FABLED";
+    const char *title = GAME_TITLE; 
     Vector2 tsz = MeasureTextEx(GetFontDefault(), title, titleSize, 2);
     L.titlePos  = (Vector2){ (W - tsz.x) * 0.5f, y };
     L.titleSize = titleSize;
     y += titleH + titleGap;
 
     // subtitle
-    const char *sub = "pc edition v0.1.0";
+    const char *sub = GAME_SUBTITLE; 
     Vector2 ssz = MeasureTextEx(GetFontDefault(), sub, subSize, 1);
     L.subPos  = (Vector2){ (W - ssz.x) * 0.5f, y };
     L.subSize = subSize;
@@ -77,8 +83,7 @@ ComputeLayout(void)
     }
     y += btnBlk + 60.0f;
 
-    // hints 
-    const char *h1 = "Up/Down or W/S - navigate    Enter/Space — select";
+    const char *h1 = "Up/Down or W/S - navigate    Enter/Space - select";
     const char *h2 = "Mouse - click    Esc - quit";
     Vector2 h1sz = MeasureTextEx(GetFontDefault(), h1, hintSize, 1);
     Vector2 h2sz = MeasureTextEx(GetFontDefault(), h2, hintSize, 1);
@@ -86,6 +91,16 @@ ComputeLayout(void)
     L.hint2Pos = (Vector2){ (W - h2sz.x) * 0.5f, y + hintSize + 4 };
 
     return L;
+}
+
+static const MenuLayout*
+GetCachedLayout(void)
+{
+    if (!s_layoutInitialized || IsWindowResized()) {
+        s_layout = ComputeLayout();
+        s_layoutInitialized = true;
+    }
+    return &s_layout;
 }
 
 static bool
@@ -117,13 +132,14 @@ void
 MenuReset(void)
 {
     g_cursor = ITEM_START;
+    s_layoutInitialized = false; 
     TraceLog(LOG_INFO, "MenuReset");
 }
 
 GameScreen
 UpdateMenu(void)
 {
-    MenuLayout L = ComputeLayout();
+    const MenuLayout *L = GetCachedLayout();
 
     if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
         g_cursor = (g_cursor + 1) % ITEM_COUNT;
@@ -139,7 +155,7 @@ UpdateMenu(void)
     int  clickedIdx = -1;
 
     for (int i = 0; i < ITEM_COUNT; i++) {
-        if (PointInRect(m, L.items[i])) {
+        if (PointInRect(m, L->items[i])) {
             g_cursor = i;
             if (clickedAny) clickedIdx = i;
         }
@@ -162,23 +178,23 @@ UpdateMenu(void)
 void
 DrawMenu(void)
 {
-    MenuLayout L = ComputeLayout();
+    const MenuLayout *L = GetCachedLayout();
 
     ClearBackground(COL_BG);
 
-    DrawText("THE FOUR FABLED",
-             (int)L.titlePos.x, (int)L.titlePos.y,
-             L.titleSize, COL_TEXT);
+    DrawText(GAME_TITLE,
+             (int)L->titlePos.x, (int)L->titlePos.y,
+             L->titleSize, COL_TEXT);
 
-    DrawText("pc edition v0.1.0",
-             (int)L.subPos.x, (int)L.subPos.y,
-             L.subSize, COL_TEXT_DIM);
+    DrawText(GAME_SUBTITLE,
+             (int)L->subPos.x, (int)L->subPos.y,
+             L->subSize, COL_TEXT_DIM);
 
-    DrawButton(L.items[ITEM_START], "Start", g_cursor == ITEM_START);
-    DrawButton(L.items[ITEM_QUIT],  "Quit",  g_cursor == ITEM_QUIT);
+    DrawButton(L->items[ITEM_START], "Start", g_cursor == ITEM_START);
+    DrawButton(L->items[ITEM_QUIT],  "Quit",  g_cursor == ITEM_QUIT);
 
-    DrawText("Up/Down or W/S — navigate    Enter/Space — select",
-             (int)L.hint1Pos.x, (int)L.hint1Pos.y, 16, COL_TEXT_DIM);
-    DrawText("Mouse — click    Esc — quit",
-             (int)L.hint2Pos.x, (int)L.hint2Pos.y, 16, COL_TEXT_DIM);
+    DrawText("Up/Down or W/S - navigate    Enter/Space - select",
+             (int)L->hint1Pos.x, (int)L->hint1Pos.y, 16, COL_TEXT_DIM);
+    DrawText("Mouse - click    Esc - quit",
+             (int)L->hint2Pos.x, (int)L->hint2Pos.y, 16, COL_TEXT_DIM);
 }

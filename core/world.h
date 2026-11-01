@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "common/types.h"
+#include "core/types.h"
 
 typedef struct World {
     uint32_t width;
