@@ -8,12 +8,13 @@
 int
 main(void)
 {
-    const int screenWidth  = 1600;
-    const int screenHeight = 900;
+    const int screenWidth  = 1920; 
+    const int screenHeight = 1080;
 
     SetTraceLogLevel(LOG_DEBUG);
 
     InitWindow(screenWidth, screenHeight, "The Four Fabled");
+    SetExitKey(0);
     SetTargetFPS(0);
 
     GameScreen screen = SCREEN_GAME;

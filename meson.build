@@ -11,6 +11,7 @@ dependencies = [
 ]
 
 sources = [
+  'core/world.c',
   'game/game.c',
   'client.c',
 ]

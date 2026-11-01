@@ -12,7 +12,7 @@
 
 // isometry params
 #define TILE_WIDTH  128
-#define TILE_HEIGHT 48
+#define TILE_HEIGHT 48 
 
 // client 
 static World    world;          
@@ -31,19 +31,20 @@ static int  prevGridY = -999;
 typedef struct {
     Vector2 v[4];
     Color color;
+    int gx, gy;
 } VisibleTileData;
 
-#define MAX_VISIBLE_TILES 4000
+#define MAX_VISIBLE_TILES 2304 
 
 static VisibleTileData g_visibleTiles[MAX_VISIBLE_TILES];
 static int g_visibleCount = 0;
 
 static Vector2
-IsoToScreen(int gridX, int gridY)
+IsoToScreen(float worldX, float worldY)
 {
     Vector2 w;
-    w.x = (gridX - gridY) * (TILE_WIDTH  / 2.0f);
-    w.y = (gridX + gridY) * (TILE_HEIGHT / 2.0f);
+    w.x = (worldX - worldY) * (TILE_WIDTH  / 2.0f);
+    w.y = (worldX + worldY) * (TILE_HEIGHT / 2.0f);
     return w;
 }
 
@@ -70,18 +71,6 @@ IsTileVisible(Camera2D cam, int gx, int gy)
     return true;
 }
 
-static Vector2
-ScreenToIso(float worldX, float worldY)
-{
-    Vector2 grid;
-    // correct translate 
-    grid.x = (worldX / (TILE_WIDTH  / 2.0f)
-            + worldY / (TILE_HEIGHT / 2.0f)) / 2.0f;
-    grid.y = (worldY / (TILE_HEIGHT / 2.0f)
-            - worldX / (TILE_WIDTH  / 2.0f)) / 2.0f;
-    return grid;
-}
-
 static void
 IsoTileVerts(int gridX, int gridY, Vector2 v[4])
 {
@@ -93,57 +82,40 @@ IsoTileVerts(int gridX, int gridY, Vector2 v[4])
     v[3] = (Vector2){ pos.x - TILE_WIDTH  / 2.0f, pos.y + TILE_HEIGHT / 2.0f };
 }
 
-/* dead code
-static void
-DrawIsoTile(int gridX, int gridY, Color color, Color outLine, float lineThick)
-{
-    Vector2 v[4];
-    IsoTileVerts(gridX, gridY, v);
-
-    DrawTriangleFan(v, 4, color);
-
-    DrawLineEx(v[0], v[1], lineThick, outLine);
-    DrawLineEx(v[1], v[2], lineThick, outLine);
-    DrawLineEx(v[2], v[3], lineThick, outLine);
-    DrawLineEx(v[3], v[0], lineThick, outLine);
-}
-*/
-
 static bool
-PointInTileWorld(Vector2 p, int gx, int gy)
+PointInTileWorld(Vector2 mouseScreen, int gx, int gy, Camera2D cam)
 {
-    Vector2 v[4];
-    IsoTileVerts(gx, gy, v);
+    Vector2 pos = IsoToScreen(gx, gy);
 
-    float cx = v[0].x;
-    float cy = v[0].y + TILE_HEIGHT / 2.0f;
-    float dx = fabsf(p.x - cx);
-    float dy = fabsf(p.y - cy);
+    Vector2 centerWorld = {
+        pos.x,
+        pos.y + TILE_HEIGHT * 0.5f
+    };
 
-    return (dx / (TILE_WIDTH / 2.0f) + dy / (TILE_HEIGHT / 2.0f)) <= 1.0f;
+    Vector2 centerScreen = GetWorldToScreen2D(centerWorld, cam);
+
+    float halfW = TILE_WIDTH * cam.zoom * 0.5f;
+    float halfH = TILE_HEIGHT * cam.zoom * 0.5f;
+
+    float dx = fabsf(mouseScreen.x - centerScreen.x);
+    float dy = fabsf(mouseScreen.y - centerScreen.y);
+    
+    return (dx / halfW + dy / halfH) <= 1.0f;
 }
 
 static bool
-PickTileWorld(Vector2 p, int *outX, int *outY)
+PickTileWorld(Vector2 mouseScreen, Camera2D cam, int *outX, int *outY)
 {
-    // OFFSET for working
-    Vector2 g = ScreenToIso(p.x, p.y + TILE_HEIGHT);
-    int bx = (int)floorf(g.x);
-    int by = (int)floorf(g.y);
-
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            int cx = bx + dx;
-            int cy = by + dy;
-            if (PointInTileWorld(p, cx, cy)) {
-                *outX = cx;
-                *outY = cy;
-                return true;
-            }
+    for (int i = 0; i < g_visibleCount; i++) {
+        int gx = g_visibleTiles[i].gx;
+        int gy = g_visibleTiles[i].gy;
+        
+        if (PointInTileWorld(mouseScreen, gx, gy, cam)) {
+            *outX = gx;
+            *outY = gy;
+            return true;
         }
     }
-    *outX = bx;
-    *outY = by;
     return false;
 }
 
@@ -170,7 +142,7 @@ void
 GameReset(void)
 {
     WorldDestroy(&world);
-    if (!WorldCreate(&world, 128, 128)) {
+    if (!WorldCreate(&world, 48, 48)) {
         TraceLog(LOG_ERROR, "WorldCreate failed");
         return;
     }
@@ -189,8 +161,12 @@ GameReset(void)
     mapCenter.y = (cx + cy) * (TILE_HEIGHT / 2.0f);
 
     camera.target   = mapCenter;
-    camera.offset   = (Vector2){ GetScreenWidth()  / 2.0f,
-                                 GetScreenHeight() / 2.0f };
+    camera.offset   = 
+    (Vector2)
+    { 
+        GetScreenWidth()  * 0.5f,
+        GetScreenHeight() * 0.5f
+    };
     camera.rotation = 0.0f;
     camera.zoom     = 1.0f;
 
@@ -210,19 +186,22 @@ UpdateGame(void)
     float wheel = GetMouseWheelMove();
     if (wheel != 0.0f) {
         Vector2 mouseScreen = GetMousePosition();
-        Vector2 mouseWorld  = GetScreenToWorld2D(mouseScreen, camera);
+        Vector2 mouseWorldBefore = GetScreenToWorld2D(mouseScreen, camera);
 
-        camera.offset = Vector2Multiply(mouseScreen, GetWindowScaleDPI());
-        camera.target = mouseWorld;
+        camera.zoom += wheel * 0.1f; 
+        camera.zoom = Clamp(camera.zoom, 0.5f, 2.0f);
 
-        float scale = 0.2f * wheel;
-        camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.25f, 4.0f);
+        Vector2 mouseWorldAfter = GetScreenToWorld2D(mouseScreen, camera);
+
+        camera.target.x += (mouseWorldBefore.x - mouseWorldAfter.x);
+        camera.target.y += (mouseWorldBefore.y - mouseWorldAfter.y);
+
     }
 
-    Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), camera);
+    int gx = -1;
+    int gy = -1;
 
-    int gx, gy;
-    bool inMap = PickTileWorld(mouseWorld, &gx, &gy);
+    bool inMap = PickTileWorld(GetMousePosition(), camera, &gx, &gy);
     inMap = inMap
          && (unsigned)gx < world.width
          && (unsigned)gy < world.height;
@@ -252,7 +231,7 @@ UpdateGame(void)
         if (selX >= 0) {
             TraceLog(LOG_INFO, "Selection cleared (was %d,%d)", selX, selY);
             selX = selY = -1;
-        }
+        } 
     }
 
     return SCREEN_GAME;
@@ -315,6 +294,8 @@ DrawGame(void)
 
                 IsoTileVerts((int)x, (int)y, g_visibleTiles[g_visibleCount].v);
                 g_visibleTiles[g_visibleCount].color = tileColor;
+                g_visibleTiles[g_visibleCount].gx = (int)x;
+                g_visibleTiles[g_visibleCount].gy = (int)y;
                 g_visibleCount++;
             }
         }
@@ -343,8 +324,15 @@ DrawGame(void)
         
         rlEnd();
 
+        for (int i = 0; i < g_visibleCount; i++) {
+            DrawIsoTileOutlineOnly(
+                g_visibleTiles[i].gx,
+                g_visibleTiles[i].gy,
+                COL_OUTLINE, 1.0f);
+        }
+
         if (hoverInMap) {
-            DrawIsoTileOutlineOnly(hoverX, hoverY, COL_OUTLINE, 1.0f);
+            DrawIsoTileOutlineOnly(hoverX, hoverY, COL_TILE_HOVER, 1.0f);
         }
         if (selX >= 0 && selY >= 0) {
             DrawIsoTileOutlineOnly(selX, selY, COL_OUTLINE_SEL, 2.0f);
