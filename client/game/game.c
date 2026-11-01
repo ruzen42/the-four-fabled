@@ -6,8 +6,8 @@
 #include <rlgl.h>
 #include <math.h>
 
-#include "client/game/game.h"
-#include "client/game/colors.h"
+#include "game/game.h"
+#include "game/colors.h"
 #include "core/world.h"
 
 // isometry params

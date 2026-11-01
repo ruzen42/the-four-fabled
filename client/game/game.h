@@ -3,7 +3,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "common/types.h"
+#include "core/types.h"
 
 typedef enum GameScreen {
     SCREEN_GAME = 0,

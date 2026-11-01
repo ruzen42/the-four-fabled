@@ -2,7 +2,7 @@
  * 01/11/2026 ruzen42
  */
 
-#include "core/world.h"
+#include "world.h"
 
 #include <stdlib.h>
 #include <stdint.h>

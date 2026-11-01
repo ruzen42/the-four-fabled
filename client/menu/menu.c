@@ -3,29 +3,14 @@
 
 #include <raylib.h>
 
-#include "client/menu/menu.h"
-#include "client/game/colors.h"
+#include "menu/menu.h"
+#include "game/colors.h"
 
 #define GAME_TITLE     "THE FOUR FABLED"
 #define GAME_SUBTITLE  "pc edition v0.1.0"
 
-typedef enum MenuItem {
-    ITEM_START = 0,
-    ITEM_QUIT,
-    ITEM_COUNT
-} MenuItem;
 
 static int g_cursor = ITEM_START;
-
-typedef struct MenuLayout {
-    Vector2   titlePos;
-    int       titleSize;
-    Vector2   subPos;
-    int       subSize;
-    Rectangle items[ITEM_COUNT];
-    Vector2   hint1Pos;
-    Vector2   hint2Pos;
-} MenuLayout;
 
 static MenuLayout s_layout = { 0 };
 static bool s_layoutInitialized = false;

@@ -3,7 +3,6 @@ project('the_four_fabled', 'c',
   default_options : ['warning_level=3', 'c_std=c11']
 )
 
-subdir('common')
 subdir('core')
 
 subdir('client')

@@ -1,0 +1,19 @@
+[1/4] compiling c client/client.p/menu/menu.c.o
+[2/4] compiling c client/client.p/game/game.c.o
+[3/4] compiling c client/client.p/client.c.o
+In file included from [01m[K../client/menu/menu.h:5[m[K,
+                 from [01m[K../client/menu/menu.c:6[m[K:
+[01m[K../client/game/game.h:6:10:[m[K [01;31m[Kfatal error: [m[Kcore/types.h: No such file or directory
+    6 | #include [01;31m[K"core/types.h"[m[K
+      |          [01;31m[K^~~~~~~~~~~~~~[m[K
+compilation terminated.
+In file included from [01m[K../client/client.c:6[m[K:
+[01m[K../client/game/game.h:6:10:[m[K [01;31m[Kfatal error: [m[Kcore/types.h: No such file or directory
+    6 | #include [01;31m[K"core/types.h"[m[K
+      |          [01;31m[K^~~~~~~~~~~~~~[m[K
+compilation terminated.
+In file included from [01m[K../client/game/game.c:9[m[K:
+[01m[K../client/game/game.h:6:10:[m[K [01;31m[Kfatal error: [m[Kcore/types.h: No such file or directory
+    6 | #include [01;31m[K"core/types.h"[m[K
+      |          [01;31m[K^~~~~~~~~~~~~~[m[K
+compilation terminated.

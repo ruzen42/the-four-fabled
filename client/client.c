@@ -3,8 +3,8 @@
 
 #include <raylib.h>
 
-#include "client/game/game.h"
-#include "client/menu/menu.h"
+#include "game/game.h"
+#include "menu/menu.h"
 
 int
 main(void)
