@@ -14,7 +14,7 @@ main(void)
     SetTraceLogLevel(LOG_DEBUG);
 
     InitWindow(screenWidth, screenHeight, "The Four Fabled");
-    SetTargetFPS(60);
+    SetTargetFPS(0);
 
     GameScreen screen = SCREEN_GAME;
     GameReset();

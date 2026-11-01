@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 31/10/2026 ruzen42 */
+ * 01/11/2026 ruzen42 */
 #pragma once
+
+#include <stdint.h>
+#include "common/types.h"
 
 typedef enum GameScreen {
     SCREEN_GAME = 0,
@@ -8,9 +11,16 @@ typedef enum GameScreen {
     SCREEN_QUIT
 } GameScreen;
 
+typedef struct ClientGameState {
+    Position selectedTile; 
+    bool hasSelection;
+} ClientGameState;
+
 void GameReset(void);
 
 GameScreen UpdateGame(void);
 
 // draw frame, not change client data
 void DrawGame(void);
+
+
