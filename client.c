@@ -8,12 +8,11 @@
 int
 main(void)
 {
-    const int screenWidth  = 1920; 
-    const int screenHeight = 1080;
-
     SetTraceLogLevel(LOG_DEBUG);
+    
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_FULLSCREEN_MODE);
 
-    InitWindow(screenWidth, screenHeight, "The Four Fabled");
+    InitWindow(0, 0, "The Four Fabled");
     SetExitKey(0);
     SetTargetFPS(0);
 

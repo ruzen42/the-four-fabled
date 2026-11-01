@@ -39,6 +39,20 @@ typedef struct {
 static VisibleTileData g_visibleTiles[MAX_VISIBLE_TILES];
 static int g_visibleCount = 0;
 
+static void
+ScreenToIsoGrid(Vector2 mouseScreen, Camera2D cam, int *gx, int *gy)
+{
+    Vector2 w = GetScreenToWorld2D(mouseScreen, cam);
+
+    float wy = w.y - TILE_HEIGHT * 0.5f;
+
+    float fx = (w.x / (TILE_WIDTH  * 0.5f) + wy / (TILE_HEIGHT * 0.5f)) * 0.5f;
+    float fy = (wy  / (TILE_HEIGHT * 0.5f) - w.x / (TILE_WIDTH * 0.5f)) * 0.5f;
+
+    *gx = (int)floorf(fx + 0.5f);
+    *gy = (int)floorf(fy + 0.5f);
+}
+
 static Vector2
 IsoToScreen(float worldX, float worldY)
 {
@@ -161,12 +175,7 @@ GameReset(void)
     mapCenter.y = (cx + cy) * (TILE_HEIGHT / 2.0f);
 
     camera.target   = mapCenter;
-    camera.offset   = 
-    (Vector2)
-    { 
-        GetScreenWidth()  * 0.5f,
-        GetScreenHeight() * 0.5f
-    };
+
     camera.rotation = 0.0f;
     camera.zoom     = 1.0f;
 
@@ -177,6 +186,13 @@ GameReset(void)
 GameScreen
 UpdateGame(void)
 {
+    camera.offset = 
+    (Vector2)
+    { 
+        GetScreenWidth()  * 0.5f,
+        GetScreenHeight() * 0.5f
+    };
+
     if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
         Vector2 delta = GetMouseDelta();
         delta = Vector2Scale(delta, -1.0f / camera.zoom);
@@ -200,7 +216,7 @@ UpdateGame(void)
 
     int gx = -1;
     int gy = -1;
-
+    ScreenToIsoGrid(GetMousePosition(), camera, &gx, &gy);
     bool inMap = PickTileWorld(GetMousePosition(), camera, &gx, &gy);
     inMap = inMap
          && (unsigned)gx < world.width
@@ -267,8 +283,19 @@ DrawGame(void)
 {
     ClearBackground(COL_BG);
 
+    Vector2 ms = GetMousePosition();
+    Vector2 mw = GetScreenToWorld2D(ms, camera);
+
     BeginMode2D(camera);
     {
+        DrawCircleV(mw, 4.0f / camera.zoom, RED);          
+
+        if (hoverInMap) {
+            Vector2 p = IsoToScreen(hoverX, hoverY);
+            DrawCircleV((Vector2){ p.x, p.y + TILE_HEIGHT*0.5f },
+                4.0f / camera.zoom, BLUE);          
+        }
+        
         g_visibleCount = 0;
 
         for (uint32_t y = 0; y < world.height; y++) {
@@ -339,6 +366,16 @@ DrawGame(void)
         }
     }
     EndMode2D();
+    
+    DrawCircleV(GetMousePosition(), 4.0f, GREEN);
+    Vector2 dpi = GetWindowScaleDPI();
+    DrawText(TextFormat("mouse scr (%.0f,%.0f)  world (%.1f,%.1f)",
+         ms.x, ms.y, mw.x, mw.y), 10, 150, 16, YELLOW);
+    DrawText(TextFormat("screen %dx%d  render %dx%d  dpi %.2f/%.2f",
+         GetScreenWidth(), GetScreenHeight(),
+         GetRenderWidth(), GetRenderHeight(), dpi.x, dpi.y), 10, 170, 16, YELLOW);
+    DrawText(TextFormat("offset (%.0f,%.0f)", camera.offset.x, camera.offset.y),
+         10, 190, 16, YELLOW);
 
     DrawText(TextFormat("Grid: (%d,%d)", hoverX, hoverY), 10, 10, 20, COL_TEXT);
 
