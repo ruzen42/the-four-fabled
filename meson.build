@@ -12,8 +12,9 @@ dependencies = [
 
 sources = [
   'core/world.c',
-  'game/game.c',
-  'client.c',
+  'client/game/game.c',
+  'client/menu/menu.c',
+  'client/client.c',
 ]
 
 exe = executable(
