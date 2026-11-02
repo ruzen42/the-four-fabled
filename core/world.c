@@ -65,5 +65,15 @@ WorldGetTile(World *world, Position pos)
 const Tile *
 WorldGetTileConst(const World *world, Position pos)
 {
-    return WorldGetTile((World *)world, pos);
+    if (world == NULL || world->tiles == NULL)
+        return NULL;
+
+    if (pos.x < 0 || pos.y < 0 ||
+        (uint32_t)pos.x >= world->width ||
+        (uint32_t)pos.y >= world->height)
+        return NULL;
+
+    return &world->tiles[
+        (size_t)pos.y * world->width + (size_t)pos.x
+    ];
 }

@@ -14,13 +14,24 @@ client_inc = include_directories(
   '..'
 )
 
-raylib_dep = dependency('raylib', required : false)
+cc = meson.get_compiler('c')
+
+m_dep = cc.find_library('m', required : true)
+
+raylib_dep = declare_dependency(
+  dependencies : [
+    cc.find_library('raylib', required : true)
+  ],
+  include_directories : include_directories() 
+)
+
 
 executable('client',
   client_sources,
   include_directories : client_inc,
   dependencies : [
     raylib_dep,
+    m_dep,
     core_dep,   
   ],
   install : true

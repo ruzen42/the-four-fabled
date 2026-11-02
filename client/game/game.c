@@ -11,8 +11,8 @@
 #include "core/world.h"
 
 // isometry params
-#define TILE_WIDTH  128
-#define TILE_HEIGHT 64
+#define TILE_WIDTH  64 
+#define TILE_HEIGHT 32 
 
 // client 
 static World    world;          
