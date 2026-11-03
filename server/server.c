@@ -11,7 +11,7 @@
 #include <signal.h>
 #include <time.h>
 
-static volatile SigAtomicT g_run = 1;
+static volatile sig_atomic_t g_run = 1;
 
 static void 
 OnSigInt(int s) 
@@ -20,7 +20,7 @@ OnSigInt(int s)
 static void 
 HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
 {
-    if (size < sizeof(MsgHelloo)) return;
+    if (size < sizeof(MsgHello)) return;
 
     const MsgHello *m = (const MsgHello *)data;
 
@@ -36,7 +36,7 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
     MsgHelloAck ack = 
     { .header     = { MSG_HELLO_ACK, sizeof ack }
     , .accepted   = 1
-    , .acceptedId = 1 /* TODO: getting real id from client/game/game.c */
+    , .assignedId = 1 /* TODO: getting real id from client/game/game.c */
     };
 
     NetPeerSend(peer, CH_CONTROL, &ack, sizeof ack, true);
@@ -56,8 +56,11 @@ Dispatch(NetPeer *peer, const uint8_t *data, size_t size)
     switch ((MsgType)h->type) {
     case MSG_HELLO: HandleHello(peer, data, h->size); break;
     case MSG_PING: {
-        MsgPong p = { .header = { MSG_PONG, sizeof p },
-                      .clientTime = ((const MsgPing*)data)->client_time };
+        MsgPong p = 
+        { .header = { MSG_PONG, sizeof p }
+        , .clientTime = ((const MsgPing*)data)->clientTime 
+        };
+
         NetPeerSend(peer, CH_CONTROL, &p, sizeof p, true);
     } break;
     case MSG_BYE: {
@@ -80,7 +83,7 @@ main(int argc, char **argv)
     }
     signal(SIGINT, OnSigInt);
     
-    NetHost *host = NetServerStart(bind, port, 32)
+    NetHost *host = NetServerStart(bind, port, 32);
     if (!host) {
         LogError("bind failed");
         NetStop();

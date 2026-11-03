@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
  * 03/11/2026 ruzen42 */
-#include "core/net.h"
+#include "net.h"
 #include <enet6/enet.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,25 +19,25 @@ NetInit(void)
 {
     if (g_inited) return true;
     
-    // ruins if not successful
     if (enet_initialize() != 0) return false;
     g_inited = true;
     return true;
 }
 
-void 
+bool 
 NetStop(void)
 {
-    if (!g_inited) return;
+    if (!g_inited) return false;
     enet_deinitialize();
     g_inited = false;
+    return true;
 }
 
 static NetHost *
 Wrap(ENetHost *h, bool server) 
 {
     if (!h) return NULL;
-    NetHost *nh = calloc(1,, sizeof *nh);
+    NetHost *nh = calloc(1, sizeof *nh);
     
     if (!nh) { enet_host_destroy(h); return NULL; }
 
@@ -53,14 +53,14 @@ NetServerStart( const char *bindAddr
 {
     ENetAddress addr = {0};
     if (bindAddr && *bindAddr) {
-        if (enet_address_set_host(&addr, bindAddr) != 0) return NULL;
+        if (enet_address_set_host(&addr, ENET_ADDRESS_TYPE_ANY, bindAddr) != 0) return NULL;
     } else {
-        addr.host = ENET_HOST_ANY;
+        // zeroinitialized addr ith ENET_ADDRESS_TYPE_ANY handles wildcard bind
     }
 
     addr.port = port;
 
-    ENetHost *h = enet_host_create(&addr, maxPeers, NET_DEFAULT_CHANNELS, 0, 0);
+    ENetHost *h = enet_host_create(ENET_ADDRESS_TYPE_ANY, &addr, maxPeers, NET_DEFAULT_CHANNELS, 0, 0);
     return Wrap(h, true);
 }
 
@@ -72,12 +72,12 @@ NetClientStart( const char *serverAddr
     if (!serverAddr) return NULL;
     size_t ch = channels ? channels : NET_DEFAULT_CHANNELS;
 
-    ENetHost *h = enet_host_create(NULL, 1, ch, 0, 0);
+    ENetHost *h = enet_host_create(ENET_ADDRESS_TYPE_ANY, NULL, 1, ch, 0, 0);
     if (!h) return NULL;
 
     ENetAddress addr = {0};
 
-    if (enet_address_set_host(&addr, serverAddr) != 0) {
+    if (enet_address_set_host(&addr, ENET_ADDRESS_TYPE_ANY, serverAddr) != 0) {
         enet_host_destroy(h);
         return NULL;
     }
@@ -173,6 +173,6 @@ NetPeerAddrStr(NetPeer *peer, char *out, size_t outSize)
 
     char ip[64];
 
-    enet_address_set_host_ip(&ep->address, ip, sizeof ip);
+    enet_address_get_host_ip(&ep->address, ip, sizeof ip);
     snprintf(out, outSize, "%s;%u", ip, (unsigned)ep->address.port);
 }

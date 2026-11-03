@@ -1,7 +1,10 @@
 core_sources = files(
   'types.h',
+  'net/net.h',
+  'net/protocol/protocol.h',
+  'world.h',
   'world.c',
-  'world.h'
+  'net/net.c'
 )
 
 core_inc = include_directories('.')
