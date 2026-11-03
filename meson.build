@@ -7,6 +7,10 @@ project('the_four_fabled', 'c',
   ],
 )
 
+
+cc = meson.get_compiler('c')
+enet6_dep = cc.find_library('enet6', required : true)
+
 subdir('core')
 
 subdir('client')

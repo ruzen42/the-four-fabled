@@ -15,7 +15,12 @@ static volatile sig_atomic_t g_run = 1;
 
 static void 
 OnSigInt(int s) 
-{ (void)s; g_run = 0; }
+{ 
+    (void)s; 
+    LogInfo("[SERVER] Shutting down gracefully via SIGINT signal...");
+    NetStop();
+    g_run = 0; 
+}
 
 static void 
 HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
@@ -23,8 +28,14 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
     if (size < sizeof(MsgHello)) return;
 
     const MsgHello *m = (const MsgHello *)data;
+    char logBuf[256];
 
     if (m->protocolVersion != PROTO_VERSION) {
+        snprintf(logBuf, sizeof(logBuf), 
+                 "[-] Handshake rejected for '%s': unsupported protocol version v%u (expected v%u)", 
+                 m->name, m->protocolVersion, PROTO_VERSION);
+        LogWarn(logBuf); // falls back gracefully
+
         MsgHelloAck ack = 
         { .header   = { MSG_HELLO_ACK, sizeof ack }
         , .accepted = 0
@@ -33,6 +44,12 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
         NetPeerDisconnectLater(peer);
         return;
     }
+
+    snprintf(logBuf, sizeof(logBuf), 
+             "[+] Successful handshake with '%s' (Client Ver: v%u, Proto: v%u)", 
+             m->name, m->clientVersion, m->protocolVersion);
+    LogInfo(logBuf);
+
     MsgHelloAck ack = 
     { .header     = { MSG_HELLO_ACK, sizeof ack }
     , .accepted   = 1
@@ -40,9 +57,6 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
     };
 
     NetPeerSend(peer, CH_CONTROL, &ack, sizeof ack, true);
-    // logging to stdout, name and clientVer
-    LogInfo("hello from: ");
-    printf("\t%s\n\tv%u\n", m->name, m->clientVersion);
 }
 
 // base server function, dispatch packages
@@ -54,20 +68,23 @@ Dispatch(NetPeer *peer, const uint8_t *data, size_t size)
     if (h->size < sizeof(MsgHeader) || h->size > size) return;
 
     switch ((MsgType)h->type) {
-    case MSG_HELLO: HandleHello(peer, data, h->size); break;
+    case MSG_HELLO: 
+        HandleHello(peer, data, h->size); 
+        break;
     case MSG_PING: {
         MsgPong p = 
         { .header = { MSG_PONG, sizeof p }
         , .clientTime = ((const MsgPing*)data)->clientTime 
         };
-
         NetPeerSend(peer, CH_CONTROL, &p, sizeof p, true);
     } break;
     case MSG_BYE: {
         NetPeerDisconnectLater(peer); 
-        LogInfo("bye for someone"); /* TODO: add tracking and logging */
+        LogInfo("[NET] Peer requested disconnection (MSG_BYE)");
     } break;
-    default: break;
+    default: 
+        LogWarn("[NET] Received unknown message type");
+        break;
     }
 }
 
@@ -78,35 +95,40 @@ main(int argc, char **argv)
     const char *bind = argc > 2 ? argv[2] : "::"; /* IPv6 */
 
     if (!NetInit()) {
-        LogFatal("enet6 init failed");
+        LogFatal("Failed to initialize enet6 network subsystem");
         return 1;
     }
     signal(SIGINT, OnSigInt);
     
     NetHost *host = NetServerStart(bind, port, 32);
     if (!host) {
-        LogError("bind failed");
+        LogError("Failed to start and bind network server socket");
         NetStop();
         return 1;
     }
-    LogInfo("Server Started: ");
-    printf(""); 
+
+    char startupBuf[128];
+    snprintf(startupBuf, sizeof(startupBuf), "[SERVER] Active and listening on [%s]:%u (Max Peers: 32)", bind, port);
+    LogInfo(startupBuf);
     
     NetEvent ev;
 
     while (g_run) {
         bool got = NetHostPool(host, &ev, 5);
         while (got) {
+            char addrStr[64];
             switch (ev.type) {
             case NET_EV_CONNECT: {
-                char a[64]; NetPeerAddrStr(ev.peer, a, sizeof a);
-                LogInfo("Connected -> ");
-                printf("+ %s\n", a);
+                NetPeerAddrStr(ev.peer, addrStr, sizeof addrStr);
+                char connBuf[128];
+                snprintf(connBuf, sizeof(connBuf), "[+] New connection established from %s", addrStr);
+                LogInfo(connBuf);
             } break;
             case NET_EV_DISCONNECT: {
-                char a[64]; NetPeerAddrStr(ev.peer, a, sizeof a);
-                LogInfo("Disconnected -> ");
-                printf("- %s\n", a);
+                NetPeerAddrStr(ev.peer, addrStr, sizeof addrStr);
+                char discBuf[128];
+                snprintf(discBuf, sizeof(discBuf), "[-] Peer disconnected: %s", addrStr);
+                LogInfo(discBuf);
             } break;
             case NET_EV_RECEIVE:
                 Dispatch(ev.peer, ev.data, ev.size);

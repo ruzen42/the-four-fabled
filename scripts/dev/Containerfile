@@ -1,11 +1,14 @@
-FROM alpine:3.24 
+FROM archlinux:base-devel
 
-RUN apk update && \
-    apk add gcc \
-            muon \
-            samurai \
-            raylib \
-            raylib-dev \
-            musl-dev
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+        git \
+        meson \
+        muon \
+        samurai \
+        raylib \
+        glfw-x11 \
+        mesa \
+        pkgconf
 
-WORKDIR /work 
+WORKDIR /work

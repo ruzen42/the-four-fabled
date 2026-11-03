@@ -5,6 +5,7 @@
 
 #include "game/game.h"
 #include "menu/menu.h"
+#include "net.h"
 
 int
 main(void)
@@ -27,11 +28,14 @@ main(void)
     MenuReset();
 
     while (!WindowShouldClose()) {
+        ClientNetPoll();
+
         switch (screen) {
             case SCREEN_GAME:
                 screen = UpdateGame();
                 break;
             case SCREEN_MENU:
+                /* TODO: button trigger for ClientNetConnect("::1", 7007); */
                 screen = UpdateMenu();
                 break;
             case SCREEN_QUIT:
@@ -51,6 +55,7 @@ main(void)
     }
 
 done:
+    ClientNetDisconnect();
     TraceLog(LOG_INFO, "Game closed");
     CloseWindow();
     return 0;

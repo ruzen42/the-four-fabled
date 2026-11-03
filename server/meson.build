@@ -7,10 +7,6 @@ server_inc = include_directories(
   '..'
 )
 
-cc = meson.get_compiler('c')
-
-enet6_dep = cc.find_library('enet6', required : true)
-
 executable('server',
   server_sources,
   include_directories : server_inc,
