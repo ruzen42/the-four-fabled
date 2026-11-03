@@ -30,12 +30,10 @@
           ];
 
           configurePhase = ''
-            export PKG_CONFIG_PATH="${ironPkg}/lib/pkgconfig:${pkgs.raylib}/lib/pkgconfig:$PKG_CONFIG_PATH"
+            export PKG_CONFIG_PATH="${enetPkg}/lib/pkgconfig:${ironPkg}/lib/pkgconfig:${pkgs.raylib}/lib/pkgconfig:$PKG_CONFIG_PATH"
             
-            export CFLAGS="-I${pkgs.raylib}/include -I${ironPkg}/include"
-            export LDFLAGS="-L${pkgs.raylib}/lib -L${ironPkg}/lib"
-
-            muon meson setup build --prefix=$out
+            export CFLAGS="-I${pkgs.raylib}/include -I${ironPkg}/include -I${enetPkg}/include"
+            export LDFLAGS="-L${pkgs.raylib}/lib -L${ironPkg}/lib -L${enetPkg}/lib"            muon meson setup build --prefix=$out
           '';
 
           buildPhase = ''
@@ -58,7 +56,7 @@
             pkg-config
             pkgs.raylib
             ironPkg
-            #enetPkg
+            enetPkg
           ];
 
           shellHook = ''
