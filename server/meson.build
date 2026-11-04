@@ -12,7 +12,7 @@ executable('server',
   include_directories : server_inc,
   dependencies : [
     core_dep,
-    dependency('iron', version : '>=2.0.0'),
+    dependency('iron', version : '2.1.0'),
     enet6_dep
   ],
   install : true

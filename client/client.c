@@ -6,6 +6,7 @@
 #include "game/game.h"
 #include "menu/menu.h"
 #include "net.h"
+#include "core/net/net.h"
 
 int
 main(void)
@@ -22,13 +23,19 @@ main(void)
         SetTargetFPS(165);
     #endif
 
-    GameScreen screen = SCREEN_MENU;
+    if (!NetInit()) {
+        TraceLog(LOG_ERROR, "NetInit() failed");
+        CloseWindow();
+        return 1;
+    }
+    TraceLog(LOG_INFO, "NetInit()");
 
+    GameScreen screen = SCREEN_MENU;
     GameReset();
     MenuReset();
 
     while (!WindowShouldClose()) {
-        ClientNetPoll();
+        //ClientNetPoll();
 
         switch (screen) {
             case SCREEN_GAME:
