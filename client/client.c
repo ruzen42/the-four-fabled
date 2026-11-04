@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 01/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 
 #include <raylib.h>
 
@@ -35,7 +35,7 @@ main(void)
     MenuReset();
 
     while (!WindowShouldClose()) {
-        //ClientNetPoll();
+        ClientNetPoll();
 
         switch (screen) {
             case SCREEN_GAME:

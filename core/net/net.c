@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 03/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 #include "net.h"
 #include <enet6/enet.h>
 #include <stdlib.h>
@@ -51,6 +51,7 @@ NetServerStart( const char *bindAddr
               , uint16_t port
               , size_t maxPeers )
 {
+    if (!g_inited || maxPeers == 0) return NULL;
     ENetAddress addr = {0};
     if (bindAddr && *bindAddr) {
         if (enet_address_set_host(&addr, ENET_ADDRESS_TYPE_ANY, bindAddr) != 0) return NULL;
@@ -69,7 +70,7 @@ NetClientStart( const char *serverAddr
               , uint16_t port
               , size_t channels)
 {
-    if (!serverAddr) return NULL;
+    if (!g_inited || !serverAddr) return NULL;
     size_t ch = channels ? channels : NET_DEFAULT_CHANNELS;
 
     ENetHost *h = enet_host_create(ENET_ADDRESS_TYPE_ANY, NULL, 1, ch, 0, 0);
@@ -104,7 +105,7 @@ NetHostPool( NetHost *host
            , NetEvent *ev 
            , uint32_t timeoutMS)
 {
-    if (!host || !ev) return false;
+    if (!g_inited || !host || !host->enet || !ev) return false;
     ENetEvent e;
     int r = enet_host_service(host->enet, &e, timeoutMS);
     if (r <= 0) return false;
@@ -126,8 +127,11 @@ NetHostPool( NetHost *host
         ev->peer    = (NetPeer *)e.peer;
         ev->channel = e.channelID;
         if (e.packet) {
-            size_t n = e.packet->dataLength < NET_MAX_PACKET
-                     ? e.packet->dataLength : NET_MAX_PACKET;
+            size_t n = e.packet->dataLength;
+            if (n > NET_MAX_PACKET) {
+                enet_packet_destroy(e.packet);
+                return false;
+            }
             memcpy(host->scratch, e.packet->data, n);
             ev->data = host->scratch;
             ev->size = n;

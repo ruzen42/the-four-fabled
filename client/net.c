@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 03/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 #include <raylib.h>
 #include <string.h>
 
@@ -29,7 +29,6 @@ ClientNetConnect(const char *addr, uint16_t port)
     g_client_host = NetClientStart(addr, port, 4);
     if (!g_client_host) {
         TraceLog(LOG_ERROR, "[NET] Failed to start client host for [%s]:%u", addr, port);
-        NetStop();
         return false;
     }
 
@@ -43,6 +42,7 @@ ClientNetPoll(void)
     if (!g_client_host) return;
 
     NetEvent ev;
+    bool disconnected = false;
     while (NetHostPool(g_client_host, &ev, 0)) {
         switch (ev.type) {
         case NET_EV_CONNECT: {
@@ -60,15 +60,20 @@ ClientNetPoll(void)
             TraceLog(LOG_WARNING, "[NET] Disconnected from server.");
             g_connected = false;
             g_assigned_id = 0;
+            disconnected = true;
             break;
 
         case NET_EV_RECEIVE:
             if (ev.size >= sizeof(MsgHeader)) {
-                const MsgHeader *h = (const MsgHeader *)ev.data;
-                if (h->type == MSG_HELLO_ACK && ev.size >= sizeof(MsgHelloAck)) {
-                    const MsgHelloAck *ack = (const MsgHelloAck *)ev.data;
-                    g_connected = ack->accepted;
-                    g_assigned_id = ack->assignedId;
+                MsgHeader header;
+                memcpy(&header, ev.data, sizeof header);
+                if (header.type == MSG_HELLO_ACK &&
+                    header.size == sizeof(MsgHelloAck) &&
+                    ev.size >= sizeof(MsgHelloAck)) {
+                    MsgHelloAck ack;
+                    memcpy(&ack, ev.data, sizeof ack);
+                    g_connected = ack.accepted == 1;
+                    g_assigned_id = g_connected ? ack.assignedId : 0;
                     if (g_connected) {
                         TraceLog(LOG_INFO, "[NET] Handshake accepted! Assigned ID: %u", g_assigned_id);
                     } else {
@@ -81,6 +86,13 @@ ClientNetPoll(void)
         default:
             break;
         }
+        if (disconnected) break;
+    }
+
+    if (disconnected) {
+        NetHostStop(g_client_host);
+        g_client_host = NULL;
+        NetStop();
     }
 }
 
@@ -91,9 +103,10 @@ ClientNetDisconnect(void)
         TraceLog(LOG_INFO, "[NET] Stopping client network host...");
         NetHostStop(g_client_host);
         g_client_host = NULL;
-        NetStop();
         g_connected = false;
+        g_assigned_id = 0;
     }
+    NetStop();
 }
 
 bool 

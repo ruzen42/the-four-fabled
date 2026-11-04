@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 01/11/2026 ruzen42
+ * 4/11/2026 ruzen42
  */
 
 #include "world.h"
@@ -18,7 +18,7 @@ WorldCreate(World *world, uint32_t width, uint32_t height)
 
     size_t count = (size_t)width * height;
 
-    if (count > SIZE_MAX / sizeof(Tile))
+    if (count / height != width || count > SIZE_MAX / sizeof(Tile))
         return false;
 
     Tile *tiles = calloc(count, sizeof(Tile));

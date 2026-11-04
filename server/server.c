@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 03/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 
 #include "core/net/net.h"
 #include "core/net/protocol/protocol.h"
@@ -17,8 +17,6 @@ static void
 OnSigInt(int s) 
 { 
     (void)s; 
-    LogInfo("[SERVER] Shutting down gracefully via SIGINT signal...");
-    NetStop();
     g_run = 0; 
 }
 
@@ -27,13 +25,15 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
 {
     if (size < sizeof(MsgHello)) return;
 
-    const MsgHello *m = (const MsgHello *)data;
+    MsgHello m;
+    memcpy(&m, data, sizeof m);
+    m.name[sizeof m.name - 1] = '\0';
     char logBuf[256];
 
-    if (m->protocolVersion != PROTO_VERSION) {
+    if (m.protocolVersion != PROTO_VERSION) {
         snprintf(logBuf, sizeof(logBuf), 
                  "[-] Handshake rejected for '%s': unsupported protocol version v%u (expected v%u)", 
-                 m->name, m->protocolVersion, PROTO_VERSION);
+                 m.name, m.protocolVersion, PROTO_VERSION);
         LogWarn(logBuf); // falls back gracefully
 
         MsgHelloAck ack = 
@@ -47,7 +47,7 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
 
     snprintf(logBuf, sizeof(logBuf), 
              "[+] Successful handshake with '%s' (Client Ver: v%u, Proto: v%u)", 
-             m->name, m->clientVersion, m->protocolVersion);
+                 m.name, m.clientVersion, m.protocolVersion);
     LogInfo(logBuf);
 
     MsgHelloAck ack = 
@@ -64,17 +64,21 @@ static void
 Dispatch(NetPeer *peer, const uint8_t *data, size_t size) 
 {
     if (size < sizeof(MsgHeader)) return;
-    const MsgHeader *h = (const MsgHeader *)data;
-    if (h->size < sizeof(MsgHeader) || h->size > size) return;
+    MsgHeader header;
+    memcpy(&header, data, sizeof header);
+    if (header.size < sizeof(MsgHeader) || header.size > size) return;
 
-    switch ((MsgType)h->type) {
+    switch ((MsgType)header.type) {
     case MSG_HELLO: 
-        HandleHello(peer, data, h->size); 
+        HandleHello(peer, data, header.size);
         break;
     case MSG_PING: {
+        if (header.size < sizeof(MsgPing)) break;
+        MsgPing ping;
+        memcpy(&ping, data, sizeof ping);
         MsgPong p = 
         { .header = { MSG_PONG, sizeof p }
-        , .clientTime = ((const MsgPing*)data)->clientTime 
+        , .clientTime = ping.clientTime
         };
         NetPeerSend(peer, CH_CONTROL, &p, sizeof p, true);
     } break;
@@ -140,6 +144,7 @@ main(int argc, char **argv)
         /* TODO: GameTurn(host); */
     }
 
+    LogInfo("[SERVER] Shutting down gracefully via SIGINT signal...");
     NetHostStop(host);
     NetStop();
     return 0;
