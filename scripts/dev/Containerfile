@@ -1,14 +1,31 @@
-FROM archlinux:base-devel
+FROM chimeralinux/chimera:latest@sha256:b58ec2b8c80561ba8f41d8852463585d22299b38737ce36d7d926cabf9c94174
 
-RUN pacman -Syu --noconfirm && \
-    pacman -S --noconfirm \
-        git \
-        meson \
-        muon \
-        samurai \
-        raylib \
-        glfw-x11 \
-        mesa \
-        pkgconf
+RUN apk update && \
+    apk add clang \
+            llvm \
+            samurai \
+            muon \
+            lld \
+            musl-dev \
+            wget2
+
+# get raylib dep
+RUN wget2 https://github.com/raysan5/raylib/releases/download/5.0/raylib-5.0_linux_amd64.tar.gz && \
+    tar xvf raylib-5.0_linux_amd64.tar.gz && \
+    mv raylib-5.0_linux_amd64/libraylib.a /usr/lib/ && \
+    cp -r raylib-5.0_linux_amd64/include/* /usr/include/ && \
+    rm -rf raylib-5.0_linux_amd64 raylib-5.0_linux_amd64.tar.gz
+
+# get libiron dep
+RUN wget2 https://github.com/ruzen42/iron-log/releases/download/2.1/linux-amd64-static.tar && \
+    tar xvf linux-amd64-static.tar && \
+    mv result/* /usr/ && \
+    rm -rf result linux-amd64-static.tar
+
+# get enet6 dep
+RUN wget2 https://github.com/ruzen42/enet6-flake/releases/download/1.3.18/linux-amd64-static.tar && \
+    tar xvf linux-amd64-static.tar && \
+    mv result/* /usr/ && \
+    rm -rf result linux-amd64-static.tar
 
 WORKDIR /work
