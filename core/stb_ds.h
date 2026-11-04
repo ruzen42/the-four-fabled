@@ -1,4 +1,5 @@
-/* stb_ds.h - v0.67 - public domain data structures - Sean Barrett 2019
+/* Updated 4/11/2026
+   stb_ds.h - v0.67 - public domain data structures - Sean Barrett 2019
 
    This is a single-header-file library that provides easy-to-use
    dynamic arrays and hash tables for C (also works in C++).
@@ -1637,11 +1638,30 @@ typedef struct { int key[2],b,c,d; } stbds_struct2;
 static char buffer[256];
 char *strkey(int n)
 {
-#if defined(_WIN32) && defined(__STDC_WANT_SECURE_LIB__)
-   sprintf_s(buffer, sizeof(buffer), "test_%d", n);
-#else
-   sprintf(buffer, "test_%d", n);
-#endif
+   size_t pos = 0;
+   const char prefix[] = "test_";
+   while (prefix[pos]) {
+      buffer[pos] = prefix[pos];
+      pos++;
+   }
+
+   unsigned int value;
+   if (n < 0) {
+      buffer[pos++] = '-';
+      value = (unsigned int)(-(n + 1)) + 1u;
+   } else {
+      value = (unsigned int)n;
+   }
+
+   char digits[sizeof(value) * 3];
+   size_t count = 0;
+   do {
+      digits[count++] = (char)('0' + value % 10u);
+      value /= 10u;
+   } while (value != 0);
+   while (count != 0)
+      buffer[pos++] = digits[--count];
+   buffer[pos] = '\0';
    return buffer;
 }
 

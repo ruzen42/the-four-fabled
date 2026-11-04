@@ -2,6 +2,7 @@
  * 4/11/2026 ruzen42 */
 
 #include <raylib.h>
+#include "log.h"
 
 #include "game/game.h"
 #include "menu/menu.h"
@@ -11,7 +12,7 @@
 int
 main(void)
 {
-    SetTraceLogLevel(LOG_DEBUG);
+    SetTraceLogLevel(LOG_NONE);
     
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_FULLSCREEN_MODE);
 
@@ -24,11 +25,11 @@ main(void)
     #endif
 
     if (!NetInit()) {
-        TraceLog(LOG_ERROR, "NetInit() failed");
+        ClientLog("NetInit() failed");
         CloseWindow();
         return 1;
     }
-    TraceLog(LOG_INFO, "NetInit()");
+    ClientLog("NetInit()");
 
     GameScreen screen = SCREEN_MENU;
     GameReset();
@@ -63,7 +64,7 @@ main(void)
 
 done:
     ClientNetDisconnect();
-    TraceLog(LOG_INFO, "Game closed");
+    ClientLog("Game closed");
     CloseWindow();
     return 0;
 }

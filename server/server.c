@@ -6,7 +6,6 @@
 
 #include <iron/logger.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <time.h>
@@ -28,13 +27,8 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
     MsgHello m;
     memcpy(&m, data, sizeof m);
     m.name[sizeof m.name - 1] = '\0';
-    char logBuf[256];
-
     if (m.protocolVersion != PROTO_VERSION) {
-        snprintf(logBuf, sizeof(logBuf), 
-                 "[-] Handshake rejected for '%s': unsupported protocol version v%u (expected v%u)", 
-                 m.name, m.protocolVersion, PROTO_VERSION);
-        LogWarn(logBuf); // falls back gracefully
+        LogWarn("Handshake rejected: unsupported protocol version"); // falls back gracefully
 
         MsgHelloAck ack = 
         { .header   = { MSG_HELLO_ACK, sizeof ack }
@@ -45,10 +39,7 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
         return;
     }
 
-    snprintf(logBuf, sizeof(logBuf), 
-             "[+] Successful handshake with '%s' (Client Ver: v%u, Proto: v%u)", 
-                 m.name, m.clientVersion, m.protocolVersion);
-    LogInfo(logBuf);
+    LogInfo("Successful client handshake");
 
     MsgHelloAck ack = 
     { .header     = { MSG_HELLO_ACK, sizeof ack }
@@ -111,28 +102,19 @@ main(int argc, char **argv)
         return 1;
     }
 
-    char startupBuf[128];
-    snprintf(startupBuf, sizeof(startupBuf), "[SERVER] Active and listening on [%s]:%u (Max Peers: 32)", bind, port);
-    LogInfo(startupBuf);
+    LogInfo("[SERVER] Active and listening (Max Peers: 32)");
     
     NetEvent ev;
 
     while (g_run) {
         bool got = NetHostPool(host, &ev, 5);
         while (got) {
-            char addrStr[64];
             switch (ev.type) {
             case NET_EV_CONNECT: {
-                NetPeerAddrStr(ev.peer, addrStr, sizeof addrStr);
-                char connBuf[128];
-                snprintf(connBuf, sizeof(connBuf), "[+] New connection established from %s", addrStr);
-                LogInfo(connBuf);
+                LogInfo("[+] New connection established");
             } break;
             case NET_EV_DISCONNECT: {
-                NetPeerAddrStr(ev.peer, addrStr, sizeof addrStr);
-                char discBuf[128];
-                snprintf(discBuf, sizeof(discBuf), "[-] Peer disconnected: %s", addrStr);
-                LogInfo(discBuf);
+                LogInfo("[-] Peer disconnected");
             } break;
             case NET_EV_RECEIVE:
                 Dispatch(ev.peer, ev.data, ev.size);

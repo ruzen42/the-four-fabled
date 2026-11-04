@@ -2,6 +2,7 @@
  * 4/11/2026 ruzen42 */
 #include <raylib.h>
 #include <string.h>
+#include "log.h"
 
 #include "core/net/net.h"
 #include "core/net/protocol/protocol.h"
@@ -17,22 +18,22 @@ bool
 ClientNetConnect(const char *addr, uint16_t port)
 {
     if (g_client_host) {
-        TraceLog(LOG_WARNING, "[NET] Already connected or connecting");
+        ClientLog("[NET] Already connected or connecting");
         return false;
     }
 
     if (!NetInit()) {
-        TraceLog(LOG_ERROR, "[NET] Failed to initialize net subsystem");
+        ClientLog("[NET] Failed to initialize net subsystem");
         return false;
     }
 
     g_client_host = NetClientStart(addr, port, 4);
     if (!g_client_host) {
-        TraceLog(LOG_ERROR, "[NET] Failed to start client host for [%s]:%u", addr, port);
+        ClientLog("[NET] Failed to start client host");
         return false;
     }
 
-    TraceLog(LOG_INFO, "[NET] Connecting to server at [%s]:%u...", addr, port);
+    ClientLog("[NET] Connecting to server");
     return true;
 }
 
@@ -46,7 +47,7 @@ ClientNetPoll(void)
     while (NetHostPool(g_client_host, &ev, 0)) {
         switch (ev.type) {
         case NET_EV_CONNECT: {
-            TraceLog(LOG_INFO, "[NET] Connected to server! Sending handshake...");
+            ClientLog("[NET] Connected to server; sending handshake");
             MsgHello hello = {
                 .header = { MSG_HELLO, sizeof hello },
                 .protocolVersion = PROTO_VERSION,
@@ -57,7 +58,7 @@ ClientNetPoll(void)
         } break;
 
         case NET_EV_DISCONNECT:
-            TraceLog(LOG_WARNING, "[NET] Disconnected from server.");
+            ClientLog("[NET] Disconnected from server");
             g_connected = false;
             g_assigned_id = 0;
             disconnected = true;
@@ -75,9 +76,9 @@ ClientNetPoll(void)
                     g_connected = ack.accepted == 1;
                     g_assigned_id = g_connected ? ack.assignedId : 0;
                     if (g_connected) {
-                        TraceLog(LOG_INFO, "[NET] Handshake accepted! Assigned ID: %u", g_assigned_id);
+                        ClientLog("[NET] Handshake accepted");
                     } else {
-                        TraceLog(LOG_WARNING, "[NET] Handshake rejected by server.");
+                        ClientLog("[NET] Handshake rejected by server");
                     }
                 }
             }
@@ -100,7 +101,7 @@ void
 ClientNetDisconnect(void)
 {
     if (g_client_host) {
-        TraceLog(LOG_INFO, "[NET] Stopping client network host...");
+        ClientLog("[NET] Stopping client network host");
         NetHostStop(g_client_host);
         g_client_host = NULL;
         g_connected = false;

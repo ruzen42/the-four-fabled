@@ -2,6 +2,7 @@
  * 4/11/2026 ruzen42 */
 
 #include <raylib.h>
+#include "log.h"
 #include "menu/menu.h"
 #include "game/colors.h"
 #include "net.h"
@@ -117,7 +118,7 @@ MenuReset(void)
     s_menuState = MENU_STATE_MAIN;
     g_cursor = MAIN_ITEM_START;
     s_layoutInitialized = false; 
-    TraceLog(LOG_INFO, "MenuReset");
+    ClientLog("MenuReset");
 }
 
 // Логика главного меню
@@ -148,16 +149,16 @@ UpdateMainMenu(void)
         int chosen = activate ? g_cursor : clickedIdx;
         switch (chosen) {
             case MAIN_ITEM_START: 
-                TraceLog(LOG_INFO, "Menu: Start Game"); 
+                ClientLog("Menu: Start Game");
                 return SCREEN_GAME;
             case MAIN_ITEM_NET:   
-                TraceLog(LOG_INFO, "Menu: Switch to Network Menu"); 
+                ClientLog("Menu: Switch to Network Menu");
                 s_menuState = MENU_STATE_NET;
                 g_cursor = NET_ITEM_CONNECT;
                 s_layoutInitialized = false; 
                 break;
             case MAIN_ITEM_QUIT:  
-                TraceLog(LOG_INFO, "Menu: Quit");  
+                ClientLog("Menu: Quit");
                 return SCREEN_QUIT;
         }
     }
@@ -195,7 +196,7 @@ UpdateNetMenu(void)
         int chosen = activate ? g_cursor : clickedIdx;
         switch (chosen) {
             case NET_ITEM_CONNECT:
-                TraceLog(LOG_INFO, "Menu: Connecting to server...");
+                ClientLog("Menu: Connecting to server...");
                 ClientNetConnect("::1", 7007); 
                 break;
             case NET_ITEM_BACK:

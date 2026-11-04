@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 01/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 
 #include <raylib.h>
+#include "log.h"
 #include <raymath.h>
 #include <rlgl.h>
 #include <math.h>
@@ -134,7 +135,7 @@ GameReset(void)
 {
     WorldDestroy(&world);
     if (!WorldCreate(&world, 64, 64)) {
-        TraceLog(LOG_ERROR, "WorldCreate failed");
+        ClientLog("WorldCreate failed");
         return;
     }
     SeedTestWorld();
@@ -156,8 +157,7 @@ GameReset(void)
     camera.rotation = 0.0f;
     camera.zoom     = 1.0f;
 
-    TraceLog(LOG_INFO, "GameReset: world %ux%u, target=(%.1f,%.1f)",
-             world.width, world.height, camera.target.x, camera.target.y);
+    ClientLog("GameReset complete");
 }
 
 GameScreen
@@ -204,8 +204,6 @@ UpdateGame(void)
     hoverInMap = inMap;
 
     if (gx != prevGridX || gy != prevGridY) {
-        if (inMap) TraceLog(LOG_TRACE, "Hover -> (%d,%d)", gx, gy);
-        else       TraceLog(LOG_TRACE, "Hover -> outside (%d,%d)", gx, gy);
         prevGridX = gx;
         prevGridY = gy;
     }
@@ -214,15 +212,11 @@ UpdateGame(void)
         if (inMap) {
             selX = gx;
             selY = gy;
-            TraceLog(LOG_INFO, "Selected tile (%d,%d)", gx, gy);
-        } else {
-            TraceLog(LOG_DEBUG, "Click outside map: (%d,%d)", gx, gy);
         }
     }
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         if (selX >= 0) {
-            TraceLog(LOG_INFO, "Selection cleared (was %d,%d)", selX, selY);
             selX = selY = -1;
         } 
     }
@@ -259,9 +253,6 @@ void
 DrawGame(void)
 {
     ClearBackground(COL_BG);
-
-    Vector2 ms = GetMousePosition();
-    Vector2 mw = GetScreenToWorld2D(ms, camera);
 
     Vector2 worldTopLeft = GetScreenToWorld2D((Vector2){0, 0}, camera);
     Vector2 worldBottomRight = 
@@ -341,28 +332,16 @@ DrawGame(void)
     EndMode2D();    
 
     DrawCircleV(GetMousePosition(), 4.0f, GREEN);
-    Vector2 dpi = GetWindowScaleDPI();
-    DrawText(TextFormat("mouse scr (%.0f,%.0f)  world (%.1f,%.1f)",
-         ms.x, ms.y, mw.x, mw.y), 10, 150, 16, YELLOW);
-    DrawText(TextFormat("screen %dx%d  render %dx%d  dpi %.2f/%.2f",
-         GetScreenWidth(), GetScreenHeight(),
-         GetRenderWidth(), GetRenderHeight(), dpi.x, dpi.y), 10, 170, 16, YELLOW);
-    DrawText(TextFormat("offset (%.0f,%.0f)", camera.offset.x, camera.offset.y),
-         10, 190, 16, YELLOW);
-
-    DrawText(TextFormat("Grid: (%d,%d)", hoverX, hoverY), 10, 10, 20, COL_TEXT);
+    DrawText("Grid position", 10, 10, 20, COL_TEXT);
 
     if (selX >= 0 && selY >= 0) {
-        const Tile *t = WorldGetTileConst(&world, (Position){ selX, selY });
-        DrawText(TextFormat("Selected: (%d,%d) type=%d",
-                            selX, selY, t ? (int)t->type : -1),
-                 10, 40, 20, COL_TILE_SEL);
+        DrawText("Tile selected", 10, 40, 20, COL_TILE_SEL);
     } else {
         DrawText("Click to select tile", 10, 40, 20, COL_TEXT_DIM);
     }
 
     DrawText("LMB: select   MMB: pan   Wheel: zoom   Esc: clear sel",
              10, 70, 16, COL_TEXT_DIM);
-    DrawText(TextFormat("zoom = %.2fx", camera.zoom), 10, 95, 16, COL_TEXT_DIM);
+    DrawText("Zoom", 10, 95, 16, COL_TEXT_DIM);
     DrawFPS(10, 120);
 }

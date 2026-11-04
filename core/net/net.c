@@ -4,7 +4,6 @@
 #include <enet6/enet.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 struct NetHost {
     ENetHost *enet;
@@ -178,5 +177,27 @@ NetPeerAddrStr(NetPeer *peer, char *out, size_t outSize)
     char ip[64];
 
     enet_address_get_host_ip(&ep->address, ip, sizeof ip);
-    snprintf(out, outSize, "%s;%u", ip, (unsigned)ep->address.port);
+    size_t used = 0;
+    while (ip[used] && used + 1 < outSize) {
+        out[used] = ip[used];
+        used++;
+    }
+    if (used + 1 >= outSize) {
+        out[outSize - 1] = '\0';
+        return;
+    }
+    out[used++] = ';';
+    out[used] = '\0';
+
+    char digits[5];
+    size_t count = 0;
+    unsigned port = ep->address.port;
+    do {
+        digits[count++] = (char)('0' + port % 10);
+        port /= 10;
+    } while (port && count < sizeof digits);
+
+    while (count && used + 1 < outSize)
+        out[used++] = digits[--count];
+    out[used] = '\0';
 }
