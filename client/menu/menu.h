@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 03/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 #pragma once
 #include "game/game.h"
 
@@ -27,6 +27,8 @@ typedef struct MenuLayout {
     Vector2   subPos;
     int       subSize;
     Rectangle items[4]; 
+    Rectangle addressField;
+    Rectangle portField;
     int       itemCount;
     Vector2   hint1Pos;
     Vector2   hint2Pos;

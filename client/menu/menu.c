@@ -12,6 +12,10 @@
 
 static MenuState s_menuState = MENU_STATE_MAIN;
 static int       g_cursor    = MAIN_ITEM_START;
+static char      s_serverAddress[64] = "::1";
+static char      s_serverPort[6] = "7007";
+static int       s_netInputFocus = 0;
+static const char *s_netStatus = "Enter server IPv6 address and port";
 
 static MenuLayout s_layout = { 0 };
 static bool       s_layoutInitialized = false;
@@ -38,9 +42,10 @@ ComputeLayout(int itemCount)
     const float subH   = subSize;
     const float btnBlk = itemCount * btnH + (itemCount - 1) * btnGap;
     const float hintsH = hintSize * 2 + 4;
+    const float fieldsH = (s_menuState == MENU_STATE_NET) ? 150.0f : 0.0f;
 
     const float totalH = titleH + titleGap + subH + subBtnGap
-                       + btnBlk + 60.0f + hintsH;
+                       + fieldsH + btnBlk + 60.0f + hintsH;
 
     float y = (H - totalH) * 0.5f;
     if (y < 20.0f) y = 20.0f;
@@ -56,6 +61,14 @@ ComputeLayout(int itemCount)
     L.subPos  = (Vector2){ (W - ssz.x) * 0.5f, y };
     L.subSize = subSize;
     y += subH + subBtnGap;
+
+    if (s_menuState == MENU_STATE_NET) {
+        const float fieldW = 440.0f;
+        const float fieldX = (W - fieldW) * 0.5f;
+        L.addressField = (Rectangle){ fieldX, y + 20.0f, fieldW, 38.0f };
+        L.portField = (Rectangle){ fieldX, y + 84.0f, fieldW, 38.0f };
+        y += fieldsH;
+    }
 
     const float btnX = (W - btnW) * 0.5f;
     for (int i = 0; i < itemCount; i++) {
@@ -155,6 +168,8 @@ UpdateMainMenu(void)
                 ClientLog("Menu: Switch to Network Menu");
                 s_menuState = MENU_STATE_NET;
                 g_cursor = NET_ITEM_CONNECT;
+                s_netInputFocus = 0;
+                s_netStatus = "Enter server IPv6 address and port";
                 s_layoutInitialized = false; 
                 break;
             case MAIN_ITEM_QUIT:  
@@ -174,16 +189,64 @@ UpdateNetMenu(void)
 {
     const MenuLayout *L = GetCachedLayout(NET_ITEM_COUNT);
 
-    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
+    if (IsKeyPressed(KEY_TAB)) {
+        s_netInputFocus = (s_netInputFocus + 1) % 3;
+        if (s_netInputFocus == 2) s_netInputFocus = -1;
+    }
+
+    if (s_netInputFocus < 0 && (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)))
         g_cursor = (g_cursor + 1) % NET_ITEM_COUNT;
-    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W))
+    if (s_netInputFocus < 0 && (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)))
         g_cursor = (g_cursor + NET_ITEM_COUNT - 1) % NET_ITEM_COUNT;
 
-    bool activate = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) || IsKeyPressed(KEY_SPACE);
+    if (s_netInputFocus >= 0) {
+        char *field = s_netInputFocus == 0 ? s_serverAddress : s_serverPort;
+        size_t capacity = s_netInputFocus == 0 ? sizeof s_serverAddress : sizeof s_serverPort;
+        size_t length = strlen(field);
+
+        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) &&
+            IsKeyPressed(KEY_A)) {
+            field[0] = '\0';
+            length = 0;
+        }
+
+        if (IsKeyPressed(KEY_BACKSPACE) && length > 0)
+            field[length - 1] = '\0';
+
+        int codepoint;
+        while ((codepoint = GetCharPressed()) != 0) {
+            bool allowed = false;
+            if (s_netInputFocus == 0) {
+                allowed = (codepoint >= '0' && codepoint <= '9') ||
+                          (codepoint >= 'a' && codepoint <= 'f') ||
+                          (codepoint >= 'A' && codepoint <= 'F') ||
+                          codepoint == ':' || codepoint == '.';
+            } else {
+                allowed = codepoint >= '0' && codepoint <= '9';
+            }
+            if (allowed && length + 1 < capacity) {
+                field[length++] = (char)codepoint;
+                field[length] = '\0';
+            }
+        }
+
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER))
+            s_netInputFocus = s_netInputFocus == 0 ? 1 : -1;
+    }
+
+    bool activate = s_netInputFocus < 0 &&
+                    (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) || IsKeyPressed(KEY_SPACE));
 
     Vector2 m = GetMousePosition();
     bool clickedAny = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
     int  clickedIdx = -1;
+
+    if (clickedAny) {
+        if (PointInRect(m, L->addressField)) s_netInputFocus = 0;
+        else if (PointInRect(m, L->portField)) s_netInputFocus = 1;
+        else if (PointInRect(m, L->items[NET_ITEM_CONNECT]) ||
+                 PointInRect(m, L->items[NET_ITEM_BACK])) s_netInputFocus = -1;
+    }
 
     for (int i = 0; i < NET_ITEM_COUNT; i++) {
         if (PointInRect(m, L->items[i])) {
@@ -196,12 +259,31 @@ UpdateNetMenu(void)
         int chosen = activate ? g_cursor : clickedIdx;
         switch (chosen) {
             case NET_ITEM_CONNECT:
-                ClientLog("Menu: Connecting to server...");
-                ClientNetConnect("::1", 7007); 
+            {
+                unsigned port = 0;
+                if (s_serverPort[0] == '\0') {
+                    s_netStatus = "Port is required";
+                    break;
+                }
+                for (size_t i = 0; s_serverPort[i]; i++)
+                    port = port * 10u + (unsigned)(s_serverPort[i] - '0');
+                if (port == 0 || port > 65535u) {
+                    s_netStatus = "Port must be between 1 and 65535";
+                    break;
+                }
+                if (s_serverAddress[0] == '\0') {
+                    s_netStatus = "IPv6 address is required";
+                    break;
+                }
+                ClientLog("Menu: Connecting to server");
+                s_netStatus = ClientNetConnect(s_serverAddress, (uint16_t)port)
+                            ? "Connecting..." : "Could not start connection";
                 break;
+            }
             case NET_ITEM_BACK:
                 s_menuState = MENU_STATE_MAIN;
                 g_cursor = MAIN_ITEM_NET;
+                s_netInputFocus = -1;
                 s_layoutInitialized = false;
                 break;
         }
@@ -210,6 +292,7 @@ UpdateNetMenu(void)
     if (IsKeyPressed(KEY_ESCAPE)) {
         s_menuState = MENU_STATE_MAIN;
         g_cursor = MAIN_ITEM_NET;
+        s_netInputFocus = -1;
         s_layoutInitialized = false;
     }
 
@@ -247,8 +330,24 @@ DrawNetMenu(void)
     DrawText(GAME_TITLE, (int)L->titlePos.x, (int)L->titlePos.y, L->titleSize, COL_TEXT);
     DrawText("network lobby", (int)L->subPos.x, (int)L->subPos.y, L->subSize, COL_TEXT_DIM);
 
-    DrawButton(L->items[NET_ITEM_CONNECT], "Connect (::1)", g_cursor == NET_ITEM_CONNECT);
+    DrawText("IPv6 address", (int)L->addressField.x, (int)L->addressField.y - 20, 16, COL_TEXT_DIM);
+    DrawRectangleRec(L->addressField, COL_TILE);
+    DrawRectangleLinesEx(L->addressField, 2.0f,
+                         s_netInputFocus == 0 ? COL_OUTLINE_SEL : COL_OUTLINE);
+    DrawText(s_serverAddress, (int)L->addressField.x + 10,
+             (int)L->addressField.y + 9, 20, COL_TEXT);
+
+    DrawText("Port", (int)L->portField.x, (int)L->portField.y - 20, 16, COL_TEXT_DIM);
+    DrawRectangleRec(L->portField, COL_TILE);
+    DrawRectangleLinesEx(L->portField, 2.0f,
+                         s_netInputFocus == 1 ? COL_OUTLINE_SEL : COL_OUTLINE);
+    DrawText(s_serverPort, (int)L->portField.x + 10,
+             (int)L->portField.y + 9, 20, COL_TEXT);
+
+    DrawButton(L->items[NET_ITEM_CONNECT], "Connect", g_cursor == NET_ITEM_CONNECT);
     DrawButton(L->items[NET_ITEM_BACK],    "Back", g_cursor == NET_ITEM_BACK);
+    DrawText(s_netStatus, (int)L->portField.x,
+             (int)L->portField.y + 44, 16, COL_TEXT_DIM);
 }
 
 void
@@ -262,8 +361,14 @@ DrawMenu(void)
     }
 
     const MenuLayout *L = GetCachedLayout(s_menuState == MENU_STATE_MAIN ? MAIN_ITEM_COUNT : NET_ITEM_COUNT);
-    DrawText("Up/Down or W/S - navigate    Enter/Space - select",
+    const char *hint1 = s_menuState == MENU_STATE_NET
+                      ? "Click a field to edit    Tab - switch focus    Ctrl+A - clear field"
+                      : "Up/Down or W/S - navigate    Enter/Space - select";
+    const char *hint2 = s_menuState == MENU_STATE_NET
+                      ? "Tab to Connect/Back    Enter - select    Esc - back"
+                      : "Mouse - click    Esc - back/quit";
+    DrawText(hint1,
              (int)L->hint1Pos.x, (int)L->hint1Pos.y, 16, COL_TEXT_DIM);
-    DrawText("Mouse - click    Esc - back/quit",
+    DrawText(hint2,
              (int)L->hint2Pos.x, (int)L->hint2Pos.y, 16, COL_TEXT_DIM);
 }
