@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 02/11/2026 ruzen42 */
+ * 5/11/2026 ruzen42 */
 #pragma once
 
 #include <stdint.h>
@@ -47,7 +47,9 @@ typedef enum UnitEffect {
 } UnitEffect;
 
 typedef struct Unit {
+    uint32_t id;
     uint8_t level;
+    uint8_t actionsLeft;
     uint16_t health;
     uint16_t mana;
     UnitType type;
@@ -83,6 +85,8 @@ typedef struct Civilization {
     
     Town *towns;             // Dynamic Array also
     Unit *units;             // Dynamic Array also
+    size_t unitCount;
+    size_t unitCapacity;
 } Civilization;
 
 typedef enum GameState {
@@ -99,6 +103,8 @@ typedef struct GameContext {
 
 typedef struct Game {
     Civilization *civs;
+    uint8_t civCount;
+    uint32_t nextUnitId;
     GameContext context;
 } Game;
 

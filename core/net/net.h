@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 11/03/2026 ruzen42 */
+ * 5/11/2026 ruzen42 */
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
@@ -36,6 +36,7 @@ NetHost *NetServerStart(const char *bindAddr, uint16_t port, size_t maxPeers);
 NetHost *NetClientStart(const char *serverAddr, uint16_t port, size_t channels);
 
 void NetHostStop(NetHost *host);
+void NetHostFlush(NetHost *host);
 
 // timeout in ms
 bool NetHostPool(NetHost *host, NetEvent *ev, uint32_t timeout);
@@ -45,6 +46,8 @@ bool NetPeerSend(NetPeer *peer,     uint8_t channel
                 , bool reliable);
 
 void NetPeerDisconnectLater(NetPeer *peer);
+void NetPeerSetTimeout(NetPeer *peer, uint32_t timeoutLimit,
+                       uint32_t timeoutMinimumMs, uint32_t timeoutMaximumMs);
 
 void NetPeerAddrStr(NetPeer *peer, char *out, size_t outSize);
 

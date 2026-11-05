@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 4/11/2026 ruzen42 */
+ * 5/11/2026 ruzen42 */
 #include "net.h"
 #include <enet6/enet.h>
 #include <stdlib.h>
@@ -97,6 +97,12 @@ NetHostStop(NetHost *host)
     free(host);
 }
 
+void
+NetHostFlush(NetHost *host)
+{
+    if (host && host->enet) enet_host_flush(host->enet);
+}
+
 bool
 NetHostPool( NetHost *host 
            , NetEvent *ev 
@@ -163,6 +169,15 @@ void
 NetPeerDisconnectLater(NetPeer *peer) 
 {
     if (peer) enet_peer_disconnect_later((ENetPeer *)peer, 0);
+}
+
+void
+NetPeerSetTimeout(NetPeer *peer, uint32_t timeoutLimit,
+                  uint32_t timeoutMinimumMs, uint32_t timeoutMaximumMs)
+{
+    if (peer)
+        enet_peer_timeout((ENetPeer *)peer, timeoutLimit,
+                          timeoutMinimumMs, timeoutMaximumMs);
 }
 
 void 

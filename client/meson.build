@@ -1,5 +1,6 @@
 client_sources = files(
   'game/colors.h',
+  'game/colors.c',
   'game/game.h',
   'menu/menu.h',
   'net.c',

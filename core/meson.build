@@ -4,6 +4,10 @@ core_sources = files(
   'net/protocol/protocol.h',
   'world.h',
   'world.c',
+  'game.h',
+  'game.c',
+  'lobby.h',
+  'lobby.c',
   'net/net.c'
 )
 

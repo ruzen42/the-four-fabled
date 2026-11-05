@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 4/11/2026 ruzen42 */
+ * 5/11/2026 ruzen42 */
 
 #include <raylib.h>
 #include "log.h"
@@ -67,6 +67,7 @@ main(void)
 
 done:
     ClientNetDisconnect();
+    GameShutdown();
     ClientLog("Game closed");
     CloseWindow();
     return 0;

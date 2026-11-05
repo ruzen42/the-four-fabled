@@ -1,23 +1,28 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 4/11/2026 ruzen42 */
+ * 5/11/2026 ruzen42 */
 
 #include <raylib.h>
 #include "log.h"
 #include <raymath.h>
-#include <rlgl.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "game/game.h"
 #include "game/colors.h"
 #include "core/world.h"
+#include "net.h"
 
 // isometry params
-#define TILE_WIDTH  64 
-#define TILE_HEIGHT 32 
+#define TILE_WIDTH  128
+#define TILE_HEIGHT 64
 
 // client 
 static World    world;          
 static Camera2D camera;
+static MsgUnitState *g_units;
+static size_t g_unitCount;
+static uint32_t selectedUnitId;
+static uint8_t g_activeCiv;
 
 static int  selX = -1;
 static int  selY = -1;
@@ -31,7 +36,6 @@ static int  prevGridY = -999;
 
 typedef struct {
     Vector2 v[4];
-    Color color;
     int gx, gy;
 } VisibleTileData;
 
@@ -39,6 +43,14 @@ typedef struct {
 
 static VisibleTileData g_visibleTiles[MAX_VISIBLE_TILES];
 static int g_visibleCount = 0;
+
+static const MsgUnitState *
+FindUnitAt(int x, int y)
+{
+    for (size_t i = 0; i < g_unitCount; i++)
+        if (g_units[i].x == x && g_units[i].y == y) return &g_units[i];
+    return NULL;
+}
 
 static Vector2
 IsoToScreen(float worldX, float worldY)
@@ -115,6 +127,11 @@ void
 GameReset(void)
 {
     WorldDestroy(&world);
+    free(g_units);
+    g_units = NULL;
+    g_unitCount = 0;
+    selectedUnitId = 0;
+    g_activeCiv = 0;
 
     selX = selY = -1;
     hoverX = hoverY = 0;
@@ -165,6 +182,45 @@ bool
 GameHasWorld(void)
 {
     return world.tiles != NULL;
+}
+
+bool
+GameSetUnitSnapshot(const MsgUnitState *units, size_t unitCount,
+                    uint8_t activeCiv)
+{
+    if (activeCiv >= 4 || (unitCount && !units) ||
+        unitCount > NET_MAX_PACKET / sizeof(MsgUnitState))
+        return false;
+    MsgUnitState *copy = unitCount ? malloc(unitCount * sizeof *copy) : NULL;
+    if (unitCount && !copy) return false;
+    for (size_t i = 0; i < unitCount; i++) {
+        if (!units[i].id || units[i].ownerCiv >= 4 || units[i].type > UNIT_MAGICIAN ||
+            units[i].health == 0 || units[i].x < 0 || units[i].y < 0 ||
+            (uint32_t)units[i].x >= world.width ||
+            (uint32_t)units[i].y >= world.height) {
+            free(copy);
+            return false;
+        }
+        copy[i] = units[i];
+    }
+    free(g_units);
+    g_units = copy;
+    g_unitCount = unitCount;
+    g_activeCiv = activeCiv;
+    bool selectedFound = false;
+    for (size_t i = 0; i < g_unitCount; i++)
+        if (g_units[i].id == selectedUnitId) selectedFound = true;
+    if (!selectedFound) selectedUnitId = 0;
+    return true;
+}
+
+void
+GameShutdown(void)
+{
+    WorldDestroy(&world);
+    free(g_units);
+    g_units = NULL;
+    g_unitCount = 0;
 }
 
 GameScreen
@@ -219,26 +275,45 @@ UpdateGame(void)
         if (inMap) {
             selX = gx;
             selY = gy;
+            const MsgUnitState *unit = FindUnitAt(gx, gy);
+            uint32_t clientId = ClientNetAssignedId();
+            if (unit && clientId && unit->ownerCiv == clientId - 1) {
+                selectedUnitId = unit->id;
+            } else if (selectedUnitId) {
+                ClientNetMoveUnit(selectedUnitId, (Position){ gx, gy });
+            }
         }
     }
 
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && inMap && selectedUnitId) {
+        const MsgUnitState *target = FindUnitAt(gx, gy);
+        uint32_t clientId = ClientNetAssignedId();
+        if (target && clientId && target->ownerCiv != clientId - 1)
+            ClientNetAttackUnit(selectedUnitId, target->id);
+    }
+
+    uint32_t clientId = ClientNetAssignedId();
+    if (IsKeyPressed(KEY_ENTER) && clientId && clientId - 1 == g_activeCiv)
+        ClientNetEndTurn();
+
     if (IsKeyPressed(KEY_ESCAPE)) {
-        if (selX >= 0) {
+        if (selX >= 0 || selectedUnitId) {
             selX = selY = -1;
-        } 
+            selectedUnitId = 0;
+        }
     }
 
     return SCREEN_GAME;
 }
 
 static Color
-TileColorFor(TileType t)
+TileColorFor(TileType type)
 {
-    switch (t) {
-        case SEA:      return (Color){  69, 133, 136, 255 }; // aqua dim
-        case GRASS:    return (Color){ 167, 192, 128, 255 }; // green
-        case FOREST:   return (Color){  79, 121,  66, 255 }; // deep green
-        case MOUNTAIN: return (Color){ 133, 146, 137, 255 }; // grey
+    switch (type) {
+        case SEA:      return (Color){  69, 133, 136, 255 };
+        case GRASS:    return (Color){ 167, 192, 128, 255 };
+        case FOREST:   return (Color){  79, 121,  66, 255 };
+        case MOUNTAIN: return (Color){ 133, 146, 137, 255 };
         default:       return COL_TILE;
     }
 }
@@ -287,45 +362,33 @@ DrawGame(void)
 
                 if (g_visibleCount >= MAX_VISIBLE_TILES) break;
 
-                const Tile *t = 
-                    WorldGetTileConst(&world, (Position){(int)x, (int)y});
-
-                Color tileColor = t ? TileColorFor(t->type) : COL_TILE;
-
-                bool isHover = hoverInMap && (int)x == hoverX && (int)y == hoverY;
-                bool isSel   = ((int)x == selX && (int)y == selY);
-
-                if (isHover) tileColor = COL_TILE_HOVER;
-                if (isSel)   tileColor = COL_TILE_SEL;
-                if (isSel && isHover) tileColor = COL_TILE_SEL_HOV;
-
                 IsoTileVerts((int)x, (int)y, g_visibleTiles[g_visibleCount].v);
-                g_visibleTiles[g_visibleCount].color = tileColor;
                 g_visibleTiles[g_visibleCount].gx = (int)x;
                 g_visibleTiles[g_visibleCount].gy = (int)y;
                 g_visibleCount++;
             }
         }
 
-        rlSetTexture(0);
-        rlBegin(RL_TRIANGLES);
-
         for (int i = 0; i < g_visibleCount; i++) {
             Vector2 *v = g_visibleTiles[i].v;
-            Color col = g_visibleTiles[i].color;
-            
-            rlColor4ub(col.r, col.g, col.b, col.a);
-            rlVertex2f(v[0].x, v[0].y);
-            rlVertex2f(v[1].x, v[1].y);
-            rlVertex2f(v[2].x, v[2].y);
+            int gx = g_visibleTiles[i].gx;
+            int gy = g_visibleTiles[i].gy;
+            const Tile *tile = WorldGetTileConst(&world, (Position){ gx, gy });
+            /* Fill the 2:1 diamond directly so every terrain tile is visible. */
+            Color base = TileColorFor(tile ? tile->type : SEA);
+            DrawTriangleFan(v, 4, base);
 
-            rlColor4ub(col.r, col.g, col.b, col.a);
-            rlVertex2f(v[0].x, v[0].y);
-            rlVertex2f(v[2].x, v[2].y);
-            rlVertex2f(v[3].x, v[3].y);
+            /* Hover and selection remain color overlays above the terrain art. */
+            bool isHover = hoverInMap && gx == hoverX && gy == hoverY;
+            bool isSel = gx == selX && gy == selY;
+            if (isHover || isSel) {
+                Color overlay = isHover && isSel ? COL_TILE_SEL_HOV :
+                                isHover ? COL_TILE_HOVER : COL_TILE_SEL;
+                overlay.a = 112;
+                DrawTriangle(v[0], v[1], v[2], overlay);
+                DrawTriangle(v[0], v[2], v[3], overlay);
+            }
         }
-        
-        rlEnd();
 
         for (int i = 0; i < g_visibleCount; i++) {
             DrawIsoTileOutlineOnly(
@@ -340,6 +403,19 @@ DrawGame(void)
         if (selX >= 0 && selY >= 0) {
             DrawIsoTileOutlineOnly(selX, selY, COL_OUTLINE_SEL, 2.0f);
         }
+
+        for (size_t i = 0; i < g_unitCount; i++) {
+            const MsgUnitState *unit = &g_units[i];
+            Vector2 pos = IsoToScreen((float)unit->x, (float)unit->y);
+            pos.y += TILE_HEIGHT * 0.5f;
+            static const Color civColors[] = { ORANGE, SKYBLUE, LIME, VIOLET };
+            Color color = civColors[unit->ownerCiv];
+            DrawCircleV(pos, 11.0f, color);
+            DrawCircleLines((int)pos.x, (int)pos.y, 11.0f,
+                unit->id == selectedUnitId ? WHITE : COL_BG);
+            DrawText(TextFormat("%u", (unsigned)unit->health), (int)pos.x - 10,
+                (int)pos.y - 5, 10, BLACK);
+        }
     }
     EndMode2D();    
 
@@ -352,8 +428,9 @@ DrawGame(void)
         DrawText("Click to select tile", 10, 40, 20, COL_TEXT_DIM);
     }
 
-    DrawText("LMB: select   MMB: pan   Wheel: zoom   Esc: clear sel",
-             10, 70, 16, COL_TEXT_DIM);
-    DrawText("Zoom", 10, 95, 16, COL_TEXT_DIM);
-    DrawFPS(10, 120);
+    DrawText("LMB: select/move   RMB: attack   Enter: end turn   MMB: pan",
+             10, 70, 14, COL_TEXT_DIM);
+    DrawText(TextFormat("Active civilization: %u", (unsigned)g_activeCiv + 1),
+             10, 90, 16, COL_TEXT);
+    DrawFPS(10, 115);
 }

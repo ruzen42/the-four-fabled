@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 4/11/2026 ruzen42 */
+ * 5/11/2026 ruzen42 */
 
 #include <raylib.h>
+#include <stdio.h>
 #include "log.h"
 #include "menu/menu.h"
 #include "game/colors.h"
@@ -187,6 +188,12 @@ UpdateMainMenu(void)
 static GameScreen
 UpdateNetMenu(void)
 {
+    if (ClientIsConnected()) {
+        s_menuState = MENU_STATE_LOBBY;
+        s_layoutInitialized = false;
+        return SCREEN_MENU;
+    }
+
     const MenuLayout *L = GetCachedLayout(NET_ITEM_COUNT);
 
     if (IsKeyPressed(KEY_TAB)) {
@@ -299,12 +306,62 @@ UpdateNetMenu(void)
     return SCREEN_MENU;
 }
 
+static unsigned
+LobbyCountPlayers(uint8_t mask)
+{
+    unsigned count = 0;
+    for (unsigned i = 0; i < 4; i++)
+        if (mask & (1u << i)) count++;
+    return count;
+}
+
+static Rectangle
+LobbyStartButton(void)
+{
+    return (Rectangle){ (GetScreenWidth() - 500.0f) * 0.5f,
+                        GetScreenHeight() * 0.70f, 500.0f, 60.0f };
+}
+
+static GameScreen
+UpdateLobbyMenu(void)
+{
+    if (!ClientIsConnected()) {
+        s_menuState = MENU_STATE_NET;
+        s_netStatus = "Disconnected from server";
+        s_layoutInitialized = false;
+        return SCREEN_MENU;
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        ClientNetDisconnect();
+        s_menuState = MENU_STATE_MAIN;
+        g_cursor = MAIN_ITEM_NET;
+        s_layoutInitialized = false;
+        return SCREEN_MENU;
+    }
+
+    ClientLobbyState state;
+    if (!ClientNetGetLobbyState(&state)) return SCREEN_MENU;
+    unsigned count = LobbyCountPlayers(state.playerMask);
+    bool canStart = ClientNetAssignedId() == state.hostId &&
+                    count == state.requiredPlayers && !state.started;
+    Rectangle button = LobbyStartButton();
+    bool clicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+                   PointInRect(GetMousePosition(), button);
+    bool activate = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) ||
+                    IsKeyPressed(KEY_SPACE);
+    if ((clicked || activate) && canStart)
+        ClientNetStartGame();
+    return SCREEN_MENU;
+}
+
 GameScreen
 UpdateMenu(void)
 {
     switch (s_menuState) {
         case MENU_STATE_MAIN: return UpdateMainMenu();
         case MENU_STATE_NET:  return UpdateNetMenu();
+        case MENU_STATE_LOBBY: return UpdateLobbyMenu();
     }
     return SCREEN_MENU;
 }
@@ -350,6 +407,82 @@ DrawNetMenu(void)
              (int)L->portField.y + 44, 16, COL_TEXT_DIM);
 }
 
+static void
+DrawLobbyMenu(void)
+{
+    const int screenWidth = GetScreenWidth();
+    const int screenHeight = GetScreenHeight();
+    const char *title = "THE FOUR FABLED";
+    const char *subtitle = "Four-player waiting room";
+    int titleSize = 48;
+    int subtitleSize = 24;
+    Vector2 titleExtent = MeasureTextEx(GetFontDefault(), title, titleSize, 2);
+    Vector2 subtitleExtent = MeasureTextEx(GetFontDefault(), subtitle, subtitleSize, 1);
+    DrawText(title, (screenWidth - (int)titleExtent.x) / 2, 55,
+             titleSize, COL_TEXT);
+    DrawText(subtitle, (screenWidth - (int)subtitleExtent.x) / 2, 120,
+             subtitleSize, COL_TEXT_DIM);
+
+    ClientLobbyState state;
+    if (!ClientNetGetLobbyState(&state)) {
+        DrawText("Waiting for server lobby state...", screenWidth / 2 - 180,
+                 screenHeight / 2, 20, COL_TEXT);
+        return;
+    }
+
+    for (unsigned i = 0; i < state.requiredPlayers; i++) {
+        float rowWidth = 500.0f;
+        Rectangle row = { (screenWidth - rowWidth) * 0.5f,
+                          screenHeight * 0.25f + i * 66.0f,
+                          rowWidth, 52.0f };
+        bool occupied = (state.playerMask & (1u << i)) != 0;
+        DrawRectangleRec(row, occupied ? COL_TILE : COL_BG);
+        DrawRectangleLinesEx(row, 2.0f,
+            occupied ? COL_OUTLINE_SEL : COL_OUTLINE);
+        const char *label;
+        char playerLabel[64];
+        if (!occupied) {
+            snprintf(playerLabel, sizeof playerLabel, "Player %u - waiting", i + 1);
+            label = playerLabel;
+        } else if (ClientNetAssignedId() == i + 1 && i == state.hostId - 1) {
+            snprintf(playerLabel, sizeof playerLabel, "Player %u - HOST (you)", i + 1);
+            label = playerLabel;
+        } else if (ClientNetAssignedId() == i + 1) {
+            snprintf(playerLabel, sizeof playerLabel, "Player %u - you", i + 1);
+            label = playerLabel;
+        } else if (i == state.hostId - 1) {
+            snprintf(playerLabel, sizeof playerLabel, "Player %u - HOST", i + 1);
+            label = playerLabel;
+        } else {
+            snprintf(playerLabel, sizeof playerLabel, "Player %u - joined", i + 1);
+            label = playerLabel;
+        }
+        DrawText(label, (int)row.x + 18, (int)row.y + 14, 22,
+                 occupied ? COL_TEXT : COL_TEXT_DIM);
+    }
+
+    unsigned count = LobbyCountPlayers(state.playerMask);
+    bool isHost = ClientNetAssignedId() == state.hostId;
+    char status[96];
+    if (state.started)
+        snprintf(status, sizeof status, "Starting game...");
+    else
+        snprintf(status, sizeof status, "Players: %u / %u", count,
+                 state.requiredPlayers);
+    Vector2 statusExtent = MeasureTextEx(GetFontDefault(), status, 20, 1);
+    DrawText(status, (screenWidth - (int)statusExtent.x) / 2,
+             (int)(screenHeight * 0.62f), 20, COL_TEXT_DIM);
+
+    bool canStart = isHost && count == state.requiredPlayers && !state.started;
+    Rectangle button = LobbyStartButton();
+    DrawButton(button, canStart ? "Start game" :
+        (isHost ? "Waiting for four players" : "Waiting for host"), canStart);
+    const char *hint = "Esc - leave room";
+    Vector2 hintExtent = MeasureTextEx(GetFontDefault(), hint, 16, 1);
+    DrawText(hint, (screenWidth - (int)hintExtent.x) / 2,
+             screenHeight - 42, 16, COL_TEXT_DIM);
+}
+
 void
 DrawMenu(void)
 {
@@ -358,6 +491,7 @@ DrawMenu(void)
     switch (s_menuState) {
         case MENU_STATE_MAIN: DrawMainMenu(); break;
         case MENU_STATE_NET:  DrawNetMenu();  break;
+        case MENU_STATE_LOBBY: DrawLobbyMenu(); return;
     }
 
     const MenuLayout *L = GetCachedLayout(s_menuState == MENU_STATE_MAIN ? MAIN_ITEM_COUNT : NET_ITEM_COUNT);
