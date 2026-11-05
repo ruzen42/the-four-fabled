@@ -8,6 +8,8 @@ RUN apk update && \
             lld \
             musl-devel \
             libarchive-progs \
+            pkgconf \
+
             wget2
 
 # get raylib dep

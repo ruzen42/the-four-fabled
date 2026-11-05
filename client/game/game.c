@@ -2,11 +2,12 @@
  * 5/11/2026 ruzen42 */
 
 #include <raylib.h>
-#include "log.h"
 #include <raymath.h>
 #include <math.h>
 #include <stdlib.h>
+#include <rlgl.h>
 
+#include "log.h"
 #include "game/game.h"
 #include "game/colors.h"
 #include "core/world.h"
@@ -23,6 +24,7 @@ static MsgUnitState *g_units;
 static size_t g_unitCount;
 static uint32_t selectedUnitId;
 static uint8_t g_activeCiv;
+static Texture2D g_tilesTex;
 
 static int  selX = -1;
 static int  selY = -1;
@@ -50,6 +52,25 @@ FindUnitAt(int x, int y)
     for (size_t i = 0; i < g_unitCount; i++)
         if (g_units[i].x == x && g_units[i].y == y) return &g_units[i];
     return NULL;
+}
+
+static Rectangle
+TileAtlasSrc(TileType type)
+{
+    int col = 0, row = 0;
+    switch (type) {
+        case GRASS:    col = 0; row = 0; break;
+        case FOREST:   col = 0; row = 1; break; 
+        case SEA:      col = 0; row = 2; break;
+        case MOUNTAIN: col = 0; row = 3; break;  
+        default:       col = 0; row = 0; break;
+    }
+    return (Rectangle){
+        (float)(col * TILE_WIDTH),
+        (float)(row * TILE_HEIGHT),
+        (float)TILE_WIDTH,
+        (float)TILE_HEIGHT
+    };
 }
 
 static Vector2
@@ -143,6 +164,8 @@ GameReset(void)
     camera.rotation = 0.0f;
     camera.zoom     = 1.0f;
 
+    g_tilesTex = LoadTexture("content/sprites/tiles.png");
+    SetTextureFilter(g_tilesTex, TEXTURE_FILTER_POINT);
 }
 
 bool
@@ -221,6 +244,7 @@ GameShutdown(void)
     free(g_units);
     g_units = NULL;
     g_unitCount = 0;
+    UnloadTexture(g_tilesTex);
 }
 
 GameScreen
@@ -306,6 +330,32 @@ UpdateGame(void)
     return SCREEN_GAME;
 }
 
+static void
+DrawIsoTileTextured(Texture2D atlas, Rectangle src, const Vector2 v[4])
+{
+    if (atlas.id == 0 || src.width <= 0 || src.height <= 0) return;
+
+    float u0 = src.x / (float)atlas.width;
+    float v0 = src.y / (float)atlas.height;
+    float u1 = (src.x + src.width)  / (float)atlas.width;
+    float v1 = (src.y + src.height) / (float)atlas.height;
+
+    /* v[0]=top(north), v[1]=right(east), v[2]=bottom(south), v[3]=left(west) */
+
+    rlSetTexture(atlas.id);
+    rlBegin(RL_QUADS);
+    {
+        rlColor4ub(255, 255, 255, 255);
+
+        rlTexCoord2f(u0, v0); rlVertex2f(v[0].x, v[0].y);  // top    <- TL
+        rlTexCoord2f(u1, v0); rlVertex2f(v[1].x, v[1].y);  // right  <- TR
+        rlTexCoord2f(u1, v1); rlVertex2f(v[2].x, v[2].y);  // bottom <- BR
+        rlTexCoord2f(u0, v1); rlVertex2f(v[3].x, v[3].y);  // left   <- BL
+    }
+    rlEnd();
+    rlSetTexture(0);
+}
+
 static Color
 TileColorFor(TileType type)
 {
@@ -374,11 +424,15 @@ DrawGame(void)
             int gx = g_visibleTiles[i].gx;
             int gy = g_visibleTiles[i].gy;
             const Tile *tile = WorldGetTileConst(&world, (Position){ gx, gy });
-            /* Fill the 2:1 diamond directly so every terrain tile is visible. */
-            Color base = TileColorFor(tile ? tile->type : SEA);
-            DrawTriangleFan(v, 4, base);
+            /* Fill the 2:1 diamond directly so every terrain tile is visible */
+            TileType type = tile ? tile->type : SEA;
 
-            /* Hover and selection remain color overlays above the terrain art. */
+            /* follback */
+            Color base = TileColorFor(type);
+            DrawTriangleFan(v, 4, base);
+            DrawIsoTileTextured(g_tilesTex, TileAtlasSrc(type), v);
+
+            /* Hover and selection remain color overlays above the terrain art */
             bool isHover = hoverInMap && gx == hoverX && gy == hoverY;
             bool isSel = gx == selX && gy == selY;
             if (isHover || isSel) {
