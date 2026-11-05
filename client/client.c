@@ -38,6 +38,9 @@ main(void)
     while (!WindowShouldClose()) {
         ClientNetPoll();
 
+        if (ClientIsConnected() && GameHasWorld())
+            screen = SCREEN_GAME;
+
         switch (screen) {
             case SCREEN_GAME:
                 screen = UpdateGame();

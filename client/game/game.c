@@ -111,53 +111,60 @@ PickTileWorld(Vector2 mouseScreen, Camera2D cam, int *outX, int *outY)
     return false;
 }
 
-static void
-SeedTestWorld(void)
-{
-    for (uint32_t y = 0; y < world.height; y++) {
-        for (uint32_t x = 0; x < world.width; x++) {
-            Tile *t = WorldGetTile(&world, (Position){ (int)x, (int)y });
-            if (!t) continue;
-
-            uint32_t h = x * 374761393u + y * 668265263u;
-            h = (h ^ (h >> 13)) * 1274126177u;
-            h ^= (h >> 16);
-
-            t->pos.x = (int)x;
-            t->pos.y = (int)y;
-            t->type  = (TileType)(h % 4);
-        }
-    }
-}
-
 void
 GameReset(void)
 {
     WorldDestroy(&world);
-    if (!WorldCreate(&world, 64, 64)) {
-        ClientLog("WorldCreate failed");
-        return;
-    }
-    SeedTestWorld();
 
     selX = selY = -1;
     hoverX = hoverY = 0;
     hoverInMap = false;
     prevGridX = prevGridY = -999;
 
-    float cx = ((float)world.width  - 1.0f) * 0.5f;
-    float cy = ((float)world.height - 1.0f) * 0.5f;
-
-    Vector2 mapCenter;
-    mapCenter.x = (cx - cy) * (TILE_WIDTH  / 2.0f);
-    mapCenter.y = (cx + cy) * (TILE_HEIGHT / 2.0f);
-
-    camera.target   = mapCenter;
+    camera.target   = (Vector2){ 0.0f, 0.0f };
 
     camera.rotation = 0.0f;
     camera.zoom     = 1.0f;
 
-    ClientLog("GameReset complete");
+}
+
+bool
+GameSetWorldSnapshot(uint32_t width, uint32_t height, const uint8_t *tileTypes)
+{
+    if (!tileTypes || width == 0 || height == 0 ||
+        (size_t)width > SIZE_MAX / (size_t)height)
+        return false;
+
+    size_t count = (size_t)width * height;
+    World received = { 0 };
+    if (!WorldCreate(&received, width, height)) return false;
+
+    for (size_t i = 0; i < count; i++) {
+        if (tileTypes[i] > MOUNTAIN) {
+            WorldDestroy(&received);
+            return false;
+        }
+        received.tiles[i].pos = (Position){ (int)(i % width), (int)(i / width) };
+        received.tiles[i].type = (TileType)tileTypes[i];
+    }
+
+    WorldDestroy(&world);
+    world = received;
+    selX = selY = -1;
+    hoverInMap = false;
+    float cx = ((float)width - 1.0f) * 0.5f;
+    float cy = ((float)height - 1.0f) * 0.5f;
+    camera.target = (Vector2){
+        (cx - cy) * (TILE_WIDTH / 2.0f),
+        (cx + cy) * (TILE_HEIGHT / 2.0f)
+    };
+    return true;
+}
+
+bool
+GameHasWorld(void)
+{
+    return world.tiles != NULL;
 }
 
 GameScreen
@@ -253,6 +260,11 @@ void
 DrawGame(void)
 {
     ClearBackground(COL_BG);
+
+    if (!world.tiles) {
+        DrawText("Waiting for server world", 24, 24, 24, COL_TEXT);
+        return;
+    }
 
     Vector2 worldTopLeft = GetScreenToWorld2D((Vector2){0, 0}, camera);
     Vector2 worldBottomRight = 

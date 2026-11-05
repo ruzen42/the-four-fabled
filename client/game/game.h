@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-only 
- * 01/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "core/types.h"
 
@@ -17,6 +18,8 @@ typedef struct ClientGameState {
 } ClientGameState;
 
 void GameReset(void);
+bool GameSetWorldSnapshot(uint32_t width, uint32_t height, const uint8_t *tileTypes);
+bool GameHasWorld(void);
 
 GameScreen UpdateGame(void);
 

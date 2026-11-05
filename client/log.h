@@ -1,4 +1,5 @@
-/* 4/11/2026 */
+/* SPDX-License-Identifier: AGPL-3.0-only 
+ * 4/11/2026 ruzen42 */
 #pragma once
 
 #include <stddef.h>

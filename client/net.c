@@ -6,11 +6,13 @@
 
 #include "core/net/net.h"
 #include "core/net/protocol/protocol.h"
+#include "game/game.h"
 #include "net.h"
 
 static NetHost *g_client_host = NULL;
 static bool g_connected = false;
 static uint32_t g_assigned_id = 0;
+static NetPeer *g_server_peer = NULL;
 
 #define INCLIENT_VERSION 1
 
@@ -30,9 +32,14 @@ ClientNetConnect(const char *addr, uint16_t port)
     g_client_host = NetClientStart(addr, port, 4);
     if (!g_client_host) {
         ClientLog("[NET] Failed to start client host");
+        NetStop();
         return false;
     }
 
+    g_connected = false;
+    g_assigned_id = 0;
+    g_server_peer = NULL;
+    GameReset();
     ClientLog("[NET] Connecting to server");
     return true;
 }
@@ -47,6 +54,7 @@ ClientNetPoll(void)
     while (NetHostPool(g_client_host, &ev, 0)) {
         switch (ev.type) {
         case NET_EV_CONNECT: {
+            g_server_peer = ev.peer;
             ClientLog("[NET] Connected to server; sending handshake");
             MsgHello hello = {
                 .header = { MSG_HELLO, sizeof hello },
@@ -61,6 +69,8 @@ ClientNetPoll(void)
             ClientLog("[NET] Disconnected from server");
             g_connected = false;
             g_assigned_id = 0;
+            g_server_peer = NULL;
+            GameReset();
             disconnected = true;
             break;
 
@@ -68,17 +78,37 @@ ClientNetPoll(void)
             if (ev.size >= sizeof(MsgHeader)) {
                 MsgHeader header;
                 memcpy(&header, ev.data, sizeof header);
-                if (header.type == MSG_HELLO_ACK &&
+                if (header.size != ev.size) break;
+                if (ev.peer == g_server_peer && ev.channel == CH_CONTROL &&
+                    header.type == MSG_HELLO_ACK &&
                     header.size == sizeof(MsgHelloAck) &&
                     ev.size >= sizeof(MsgHelloAck)) {
                     MsgHelloAck ack;
                     memcpy(&ack, ev.data, sizeof ack);
-                    g_connected = ack.accepted == 1;
+                    g_connected = ack.accepted == 1 && ack.assignedId != 0;
                     g_assigned_id = g_connected ? ack.assignedId : 0;
                     if (g_connected) {
                         ClientLog("[NET] Handshake accepted");
                     } else {
                         ClientLog("[NET] Handshake rejected by server");
+                    }
+                } else if (g_connected && ev.peer == g_server_peer &&
+                           ev.channel == CH_SNAPSHOT &&
+                           header.type == MSG_WORLD_SNAPSHOT &&
+                           header.size >= sizeof(MsgWorldSnapshotHeader)) {
+                    MsgWorldSnapshotHeader snapshot;
+                    memcpy(&snapshot, ev.data, sizeof snapshot);
+                    size_t width = snapshot.width;
+                    size_t height = snapshot.height;
+                    if (width != 0 && height != 0 &&
+                        width <= SIZE_MAX / height &&
+                        width * height <= NET_MAX_PACKET - sizeof snapshot &&
+                        sizeof snapshot + width * height == header.size &&
+                        GameSetWorldSnapshot(snapshot.width, snapshot.height,
+                            ev.data + sizeof snapshot)) {
+                        ClientLog("[NET] Server world received");
+                    } else {
+                        ClientLog("[NET] Invalid world snapshot received");
                     }
                 }
             }
@@ -93,6 +123,7 @@ ClientNetPoll(void)
     if (disconnected) {
         NetHostStop(g_client_host);
         g_client_host = NULL;
+        g_server_peer = NULL;
         NetStop();
     }
 }
@@ -106,6 +137,8 @@ ClientNetDisconnect(void)
         g_client_host = NULL;
         g_connected = false;
         g_assigned_id = 0;
+        g_server_peer = NULL;
+        GameReset();
     }
     NetStop();
 }

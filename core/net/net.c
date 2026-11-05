@@ -72,15 +72,13 @@ NetClientStart( const char *serverAddr
     if (!g_inited || !serverAddr) return NULL;
     size_t ch = channels ? channels : NET_DEFAULT_CHANNELS;
 
-    ENetHost *h = enet_host_create(ENET_ADDRESS_TYPE_ANY, NULL, 1, ch, 0, 0);
-    if (!h) return NULL;
-
     ENetAddress addr = {0};
 
-    if (enet_address_set_host(&addr, ENET_ADDRESS_TYPE_ANY, serverAddr) != 0) {
-        enet_host_destroy(h);
+    if (enet_address_set_host(&addr, ENET_ADDRESS_TYPE_IPV6, serverAddr) != 0)
         return NULL;
-    }
+
+    ENetHost *h = enet_host_create(ENET_ADDRESS_TYPE_IPV6, NULL, 1, ch, 0, 0);
+    if (!h) return NULL;
 
     addr.port = port;
 

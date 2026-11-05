@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: AGPL-3.0-only
- * 03/11/2026 ruzen42 */
+ * 4/11/2026 ruzen42 */
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
 #include <core/net/net.h> /* for NET_MAX_PACKET */ 
 
-#define PROTO_VERSION 1
+#define PROTO_VERSION 2
 #define CH_CONTROL 0   
 #define CH_SNAPSHOT 1 
 #define CH_EVENTS 2
@@ -17,6 +17,7 @@ typedef enum MsgType {
     MSG_BYE,
     MSG_PING,
     MSG_PONG,
+    MSG_WORLD_SNAPSHOT,
     MSG_COUNT
 } MsgType;
 
@@ -49,3 +50,9 @@ typedef struct MsgPong {
     MsgHeader header; 
     uint32_t clientTime; 
 } MsgPong;
+
+typedef struct MsgWorldSnapshotHeader {
+    MsgHeader header;
+    uint32_t width;
+    uint32_t height;
+} MsgWorldSnapshotHeader;

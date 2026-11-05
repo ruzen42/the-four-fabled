@@ -3,6 +3,7 @@
 
 #include "core/net/net.h"
 #include "core/net/protocol/protocol.h"
+#include "core/world.h"
 
 #include <iron/logger.h>
 #include <stdlib.h>
@@ -11,6 +12,48 @@
 #include <time.h>
 
 static volatile sig_atomic_t g_run = 1;
+static World g_world = { 0 };
+
+static bool
+CreateWorld(void)
+{
+    if (!WorldCreate(&g_world, 64, 64)) return false;
+
+    for (uint32_t y = 0; y < g_world.height; y++) {
+        for (uint32_t x = 0; x < g_world.width; x++) {
+            Tile *tile = WorldGetTile(&g_world, (Position){ (int)x, (int)y });
+            if (!tile) continue;
+            uint32_t h = x * 374761393u + y * 668265263u;
+            h = (h ^ (h >> 13)) * 1274126177u;
+            h ^= h >> 16;
+            tile->pos = (Position){ (int)x, (int)y };
+            tile->type = (TileType)(h % 4u);
+        }
+    }
+    return true;
+}
+
+static void
+SendWorldSnapshot(NetPeer *peer)
+{
+    const size_t tileCount = (size_t)g_world.width * g_world.height;
+    const size_t packetSize = sizeof(MsgWorldSnapshotHeader) + tileCount;
+    if (!g_world.tiles || packetSize > NET_MAX_PACKET || packetSize > UINT16_MAX)
+        return;
+
+    uint8_t packet[sizeof(MsgWorldSnapshotHeader) + 64 * 64];
+    MsgWorldSnapshotHeader header = {
+        .header = { MSG_WORLD_SNAPSHOT, (uint16_t)packetSize },
+        .width = g_world.width,
+        .height = g_world.height
+    };
+    memcpy(packet, &header, sizeof header);
+    for (size_t i = 0; i < tileCount; i++)
+        packet[sizeof header + i] = (uint8_t)g_world.tiles[i].type;
+
+    if (!NetPeerSend(peer, CH_SNAPSHOT, packet, packetSize, true))
+        LogWarn("Failed to queue world snapshot for client");
+}
 
 static void 
 OnSigInt(int s) 
@@ -22,12 +65,13 @@ OnSigInt(int s)
 static void 
 HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
 {
-    if (size < sizeof(MsgHello)) return;
+    if (size != sizeof(MsgHello)) return;
 
     MsgHello m;
     memcpy(&m, data, sizeof m);
     m.name[sizeof m.name - 1] = '\0';
-    if (m.protocolVersion != PROTO_VERSION) {
+    if (m.header.type != MSG_HELLO || m.header.size != size ||
+        m.protocolVersion != PROTO_VERSION) {
         LogWarn("Handshake rejected: unsupported protocol version"); // falls back gracefully
 
         MsgHelloAck ack = 
@@ -48,16 +92,17 @@ HandleHello(NetPeer *peer, const uint8_t *data, size_t size)
     };
 
     NetPeerSend(peer, CH_CONTROL, &ack, sizeof ack, true);
+    SendWorldSnapshot(peer);
 }
 
 // base server function, dispatch packages
 static void 
 Dispatch(NetPeer *peer, const uint8_t *data, size_t size) 
 {
-    if (size < sizeof(MsgHeader)) return;
+    if (!peer || !data || size < sizeof(MsgHeader) || size > NET_MAX_PACKET) return;
     MsgHeader header;
     memcpy(&header, data, sizeof header);
-    if (header.size < sizeof(MsgHeader) || header.size > size) return;
+    if (header.size < sizeof(MsgHeader) || header.size != size) return;
 
     switch ((MsgType)header.type) {
     case MSG_HELLO: 
@@ -89,8 +134,14 @@ main(int argc, char **argv)
     uint16_t port = argc > 1 ? (uint16_t)atoi(argv[1]) : 7007;
     const char *bind = argc > 2 ? argv[2] : "::"; /* IPv6 */
 
+    if (!CreateWorld()) {
+        LogFatal("Failed to create server world");
+        return 1;
+    }
+
     if (!NetInit()) {
         LogFatal("Failed to initialize enet6 network subsystem");
+        WorldDestroy(&g_world);
         return 1;
     }
     signal(SIGINT, OnSigInt);
@@ -99,6 +150,7 @@ main(int argc, char **argv)
     if (!host) {
         LogError("Failed to start and bind network server socket");
         NetStop();
+        WorldDestroy(&g_world);
         return 1;
     }
 
@@ -129,5 +181,6 @@ main(int argc, char **argv)
     LogInfo("[SERVER] Shutting down gracefully via SIGINT signal...");
     NetHostStop(host);
     NetStop();
+    WorldDestroy(&g_world);
     return 0;
 }
