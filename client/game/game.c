@@ -164,6 +164,7 @@ GameReset(void)
     camera.rotation = 0.0f;
     camera.zoom     = 1.0f;
 
+    if (g_tilesTex.id) UnloadTexture(g_tilesTex);
     g_tilesTex = LoadTexture("content/sprites/tiles.png");
     SetTextureFilter(g_tilesTex, TEXTURE_FILTER_POINT);
 }
@@ -335,25 +336,14 @@ DrawIsoTileTextured(Texture2D atlas, Rectangle src, const Vector2 v[4])
 {
     if (atlas.id == 0 || src.width <= 0 || src.height <= 0) return;
 
-    float u0 = src.x / (float)atlas.width;
-    float v0 = src.y / (float)atlas.height;
-    float u1 = (src.x + src.width)  / (float)atlas.width;
-    float v1 = (src.y + src.height) / (float)atlas.height;
+    const float side = TILE_WIDTH / 1.41421356f;
+    Rectangle dst = { 0.0f, 0.0f, side, side };
 
-    /* v[0]=top(north), v[1]=right(east), v[2]=bottom(south), v[3]=left(west) */
-
-    rlSetTexture(atlas.id);
-    rlBegin(RL_QUADS);
-    {
-        rlColor4ub(255, 255, 255, 255);
-
-        rlTexCoord2f(u0, v0); rlVertex2f(v[0].x, v[0].y);  // top    <- TL
-        rlTexCoord2f(u1, v0); rlVertex2f(v[1].x, v[1].y);  // right  <- TR
-        rlTexCoord2f(u1, v1); rlVertex2f(v[2].x, v[2].y);  // bottom <- BR
-        rlTexCoord2f(u0, v1); rlVertex2f(v[3].x, v[3].y);  // left   <- BL
-    }
-    rlEnd();
-    rlSetTexture(0);
+    rlPushMatrix();
+    rlTranslatef(v[0].x, v[0].y, 0.0f);
+    rlScalef(1.0f, 0.5f, 1.0f);
+    DrawTexturePro(atlas, src, dst, (Vector2){ 0.0f, 0.0f }, 45.0f, WHITE);
+    rlPopMatrix();
 }
 
 static Color
@@ -429,7 +419,8 @@ DrawGame(void)
 
             /* follback */
             Color base = TileColorFor(type);
-            DrawTriangleFan(v, 4, base);
+            DrawTriangle(v[0], v[3], v[2], base);
+            DrawTriangle(v[0], v[2], v[1], base);
             DrawIsoTileTextured(g_tilesTex, TileAtlasSrc(type), v);
 
             /* Hover and selection remain color overlays above the terrain art */
@@ -439,8 +430,8 @@ DrawGame(void)
                 Color overlay = isHover && isSel ? COL_TILE_SEL_HOV :
                                 isHover ? COL_TILE_HOVER : COL_TILE_SEL;
                 overlay.a = 112;
-                DrawTriangle(v[0], v[1], v[2], overlay);
-                DrawTriangle(v[0], v[2], v[3], overlay);
+                DrawTriangle(v[0], v[3], v[2], overlay);
+                DrawTriangle(v[0], v[2], v[1], overlay);
             }
         }
 
